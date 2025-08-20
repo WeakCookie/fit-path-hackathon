@@ -10,38 +10,18 @@ export function Navigation() {
   const isActive = (path: string) => location.pathname === path
 
   return (
-    <nav className="bg-card shadow-sm border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/40 backdrop-blur-md shadow-sm border-b border-white/70">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center gap-2 font-bold text-xl">
             <div className="p-2 bg-gradient-to-r from-fitness-orange to-fitness-orange-hover rounded-lg shadow-md">
               <Dumbbell className="h-5 w-5 text-fitness-orange-foreground" />
             </div>
-            TrainSensei
+            FitPath
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <Link
-              to="/"
-              className={`text-sm font-medium transition-colors ${
-                isActive("/") 
-                  ? "text-fitness-orange" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              to="/training-log"
-              className={`text-sm font-medium transition-colors ${
-                isActive("/training-log") 
-                  ? "text-fitness-orange" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Training Log
-            </Link>
             <Link
               to="/research-confidence"
               className={`text-sm font-medium transition-colors ${

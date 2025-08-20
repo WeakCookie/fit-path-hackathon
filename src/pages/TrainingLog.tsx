@@ -214,6 +214,7 @@ export default function TrainingLog() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <div className="pt-16">
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -327,6 +328,7 @@ export default function TrainingLog() {
             </CardContent>
           </Card>
         </div>
+      </div>
       </div>
 
       <AIModal
