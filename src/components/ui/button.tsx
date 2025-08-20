@@ -21,6 +21,11 @@ const buttonVariants = cva(
         suggestion: "bg-fitness-orange text-fitness-orange-foreground hover:bg-fitness-orange-hover shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105",
         prediction: "bg-prediction-gray text-prediction-gray-foreground hover:bg-prediction-gray-hover shadow-sm transition-all duration-300",
         hero: "bg-gradient-to-r from-fitness-orange to-fitness-orange-hover text-fitness-orange-foreground hover:shadow-lg hover:scale-105 shadow-md transition-all duration-300",
+        "performance-up": "bg-green-500 text-white hover:bg-green-600 shadow-md transition-all duration-300 hover:scale-105",
+        "performance-neutral": "bg-yellow-500 text-white hover:bg-yellow-600 shadow-md transition-all duration-300 hover:scale-105",
+        "performance-down": "bg-red-500 text-white hover:bg-red-600 shadow-md transition-all duration-300 hover:scale-105",
+        injury: "bg-red-100 text-red-800 hover:bg-red-200 border border-red-300 shadow-sm transition-all duration-300",
+        recovery: "bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-300 shadow-sm transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",
