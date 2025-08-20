@@ -18,6 +18,9 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        suggestion: "bg-fitness-orange text-fitness-orange-foreground hover:bg-fitness-orange-hover shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105",
+        prediction: "bg-prediction-gray text-prediction-gray-foreground hover:bg-prediction-gray-hover shadow-sm transition-all duration-300",
+        hero: "bg-gradient-to-r from-fitness-orange to-fitness-orange-hover text-fitness-orange-foreground hover:shadow-lg hover:scale-105 shadow-md transition-all duration-300",
       },
       size: {
         default: "h-10 px-4 py-2",

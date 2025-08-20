@@ -52,6 +52,16 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				'fitness-orange': {
+					DEFAULT: 'hsl(var(--fitness-orange))',
+					hover: 'hsl(var(--fitness-orange-hover))',
+					foreground: 'hsl(var(--fitness-orange-foreground))'
+				},
+				'prediction-gray': {
+					DEFAULT: 'hsl(var(--prediction-gray))',
+					hover: 'hsl(var(--prediction-gray-hover))',
+					foreground: 'hsl(var(--prediction-gray-foreground))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
