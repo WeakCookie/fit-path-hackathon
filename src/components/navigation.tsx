@@ -42,6 +42,16 @@ export function Navigation() {
             >
               Training Log
             </Link>
+            <Link
+              to="/research-confidence"
+              className={`text-sm font-medium transition-colors ${
+                isActive("/research-confidence") 
+                  ? "text-fitness-orange" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Research Confidence
+            </Link>
             <Button 
               variant="hero" 
               size="sm" 
@@ -87,6 +97,17 @@ export function Navigation() {
                 onClick={() => setIsOpen(false)}
               >
                 Training Log
+              </Link>
+              <Link
+                to="/research-confidence"
+                className={`text-sm font-medium transition-colors ${
+                  isActive("/research-confidence") 
+                    ? "text-fitness-orange" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                Research Confidence
               </Link>
               <Button 
                 variant="hero" 
