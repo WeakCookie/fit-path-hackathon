@@ -28,7 +28,7 @@ const Index = () => {
         <div className="relative z-20 container mx-auto px-4 py-20 lg:py-32">
           <div className="max-w-2xl">
             <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight text-gray-900 drop-shadow-sm">
-              Achieve your 
+              Achieve Your 
               <span className="bg-gradient-to-r from-fitness-orange to-fitness-orange-hover bg-clip-text text-transparent">
                 {" "}Peak Athleticism
               </span>
