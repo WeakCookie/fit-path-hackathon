@@ -32,6 +32,16 @@ export function Navigation() {
             >
               Research Confidence
             </Link>
+            <Link
+              to="/knowledge-base"
+              className={`text-sm font-medium transition-colors ${
+                isActive("/knowledge-base") 
+                  ? "text-fitness-orange" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Knowledge Base
+            </Link>
             <Button 
               variant="hero" 
               size="sm" 
@@ -88,6 +98,17 @@ export function Navigation() {
                 onClick={() => setIsOpen(false)}
               >
                 Research Confidence
+              </Link>
+              <Link
+                to="/knowledge-base"
+                className={`text-sm font-medium transition-colors ${
+                  isActive("/knowledge-base") 
+                    ? "text-fitness-orange" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                Knowledge Base
               </Link>
               <Button 
                 variant="hero" 
