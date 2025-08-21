@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import TrainingLog from "./pages/TrainingLog";
 import ResearchConfidence from "./pages/ResearchConfidence";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import Recovery from "./pages/Recovery";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/training-log" element={<TrainingLog />} />
           <Route path="/research-confidence" element={<ResearchConfidence />} />
           <Route path="/knowledge-base" element={<KnowledgeBase />} />
+          <Route path="/recovery" element={<Recovery />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

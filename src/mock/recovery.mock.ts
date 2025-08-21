@@ -1,4 +1,6 @@
-[
+import { IRecovery } from "@/types/recovery.schema"
+
+const recoveryData: IRecovery[] = [
     {
       "date": "2025-08-10",
       "sleepDuration": 8.1,
@@ -92,4 +94,6 @@
       "source": "Smartwatch Data"
     }
   ]
+
+export default recoveryData
   

@@ -42,6 +42,16 @@ export function Navigation() {
             >
               Knowledge Base
             </Link>
+            <Link
+              to="/recovery"
+              className={`text-sm font-medium transition-colors ${
+                isActive("/recovery") 
+                  ? "text-fitness-orange" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Recovery
+            </Link>
             <Button 
               variant="hero" 
               size="sm" 
@@ -109,6 +119,17 @@ export function Navigation() {
                 onClick={() => setIsOpen(false)}
               >
                 Knowledge Base
+              </Link>
+              <Link
+                to="/recovery"
+                className={`text-sm font-medium transition-colors ${
+                  isActive("/recovery") 
+                    ? "text-fitness-orange" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                Recovery
               </Link>
               <Button 
                 variant="hero" 
