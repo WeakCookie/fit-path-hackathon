@@ -6,7 +6,8 @@
       "HRV": 65,
       "soreness": [],
       "fatigue": 2,
-      "source": "Smartwatch Data"
+      "source": "Smartwatch Data",
+      "injury": ["dislocate left shoulder"]
     },
     {
       "date": "2025-08-11",
@@ -15,7 +16,8 @@
       "HRV": 62,
       "soreness": [],
       "fatigue": 2,
-      "source": "Smartwatch Data"
+      "source": "Smartwatch Data",
+      "injury": ["dislocate left shoulder feel a bit better, but still hard to move"]
     },
     {
       "date": "2025-08-12",
