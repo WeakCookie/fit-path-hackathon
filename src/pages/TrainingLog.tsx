@@ -277,15 +277,15 @@ export default function TrainingLog() {
                 <div className="flex flex-wrap gap-3">
                   <Button variant="performance-up" className="animate-fade-in">
                     <TrendingUp className="h-4 w-4" />
-                    Performance +
+                    Performance Increased
                   </Button>
                   <Button variant="performance-neutral" className="animate-fade-in" style={{ animationDelay: '100ms' }}>
                     <Minus className="h-4 w-4" />
-                    Performance ~
+                    Performance Neutral
                   </Button>
                   <Button variant="performance-down" className="animate-fade-in" style={{ animationDelay: '200ms' }}>
                     <TrendingDown className="h-4 w-4" />
-                    Performance -
+                    Performance Decreased
                   </Button>
                 </div>
               </div>
