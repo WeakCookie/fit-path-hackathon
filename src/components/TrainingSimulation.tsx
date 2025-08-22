@@ -2,6 +2,26 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, TrendingUp, Minus, TrendingDown, Heart, Moon, Frown, Play } from "lucide-react"
+import { runSimulation } from "@/utils/performanceSimulation"
+import trainingData from "@/mock/training.mock"
+import { useToast } from "@/components/ui/use-toast"
+import { IDailyTrainingLog } from "@/types/daily.schema"
+
+export enum TrainingSimulationId {
+  PERFORMANCE_UP = "performance-up",
+  PERFORMANCE_NEUTRAL = "performance-neutral", 
+  PERFORMANCE_DOWN = "performance-down"
+}
+
+export enum InjurySimulationId {
+  KNEE_HURT = "knee-hurt",
+  BREAK_ANKLE = "break-ankle"
+}
+
+export enum RecoverySimulationId {
+  SLEEP_UNDER_6 = "sleep-under-6",
+  SORE_LEGS = "sore-legs"
+}
 
 interface TrainingSimulationOptions {
   training: string | null
@@ -29,25 +49,27 @@ interface RecoveryOption {
 }
 
 const trainingOptions: TrainingOption[] = [
-  { id: "performance-up", label: "Performance Increased", icon: TrendingUp, variant: "performance-up" },
-  { id: "performance-neutral", label: "Performance Neutral", icon: Minus, variant: "performance-neutral" },
-  { id: "performance-down", label: "Performance Decreased", icon: TrendingDown, variant: "performance-down" }
+  { id: TrainingSimulationId.PERFORMANCE_UP, label: "Performance Increased", icon: TrendingUp, variant: "performance-up" },
+  { id: TrainingSimulationId.PERFORMANCE_NEUTRAL, label: "Performance Neutral", icon: Minus, variant: "performance-neutral" },
+  { id: TrainingSimulationId.PERFORMANCE_DOWN, label: "Performance Decreased", icon: TrendingDown, variant: "performance-down" }
 ]
 
 const injuryOptions: InjuryOption[] = [
-  { id: "knee-hurt", label: "Knee hurt", icon: Frown },
-  { id: "break-ankle", label: "Break ankle", icon: Frown }
+  { id: InjurySimulationId.KNEE_HURT, label: "Knee hurt", icon: Frown },
+  { id: InjurySimulationId.BREAK_ANKLE, label: "Break ankle", icon: Frown }
 ]
 
 const recoveryOptions: RecoveryOption[] = [
-  { id: "sleep-under-6", label: "Sleep under 6 hours", icon: Moon },
-  { id: "sore-legs", label: "Sore legs", icon: Frown }
+  { id: RecoverySimulationId.SLEEP_UNDER_6, label: "Sleep under 6 hours", icon: Moon },
+  { id: RecoverySimulationId.SORE_LEGS, label: "Sore legs", icon: Frown }
 ]
 
 export function TrainingSimulation() {
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null)
   const [selectedInjuries, setSelectedInjuries] = useState<Set<string>>(new Set())
   const [selectedRecoveries, setSelectedRecoveries] = useState<Set<string>>(new Set())
+  const [currentTrainingData, setCurrentTrainingData] = useState<IDailyTrainingLog[]>(trainingData)
+  const { toast } = useToast()
 
   const handleTrainingClick = (training: string) => {
     setSelectedTraining(selectedTraining === training ? null : training)
@@ -84,19 +106,51 @@ export function TrainingSimulation() {
       recoveries: Array.from(selectedRecoveries)
     }
     
-    console.log("Training Simulation Options:", selectedOptions)
+    // Run simulation if a training type is selected
+    if (selectedTraining && Object.values(TrainingSimulationId).includes(selectedTraining as TrainingSimulationId)) {
+      const updatedData = runSimulation(currentTrainingData, selectedTraining as TrainingSimulationId)
+      console.log("Updated data after simulation:", updatedData)
+      
+      // Update the training data array for future simulations
+      setCurrentTrainingData(updatedData)
+      
+      // Show success toast
+      toast({
+        title: "Simulation Complete",
+        description: `Training simulation (${selectedOptions.training?.replace('-', ' ')}) has been run successfully. Check training History for results.`,
+      })
+      
+      // Reset selections for next simulation
+      setSelectedTraining(null)
+      setSelectedInjuries(new Set())
+      setSelectedRecoveries(new Set())
+    } else {
+      // Show error toast
+      toast({
+        title: "Simulation Error",
+        description: "Please select a training simulation type before running.",
+        variant: "destructive"
+      })
+      console.log("No training simulation selected")
+    }
   }
 
   return (
-    <Card className="shadow-lg border-0 mt-8">
-      <CardHeader className="bg-gradient-to-r from-muted/50 to-muted/30 border-b border-border/50">
-        <CardTitle className="flex items-center gap-2">
-          <div className="p-1.5 bg-primary/10 rounded-md">
-            <Activity className="h-4 w-4 text-primary" />
-          </div>
-          Training Simulation
-        </CardTitle>
-      </CardHeader>
+    <div className="relative border-2 border-dashed border-gray-400 rounded-lg p-4 mt-8">
+      {/* Demo Only Label */}
+      <div className="absolute -top-3 right-4 bg-white px-2 py-1 text-xs font-semibold text-gray-600 border border-gray-400 rounded">
+        Demo Only
+      </div>
+      
+      <Card className="shadow-lg border-0">
+        <CardHeader className="bg-gradient-to-r from-muted/50 to-muted/30 border-b border-border/50">
+          <CardTitle className="flex items-center gap-2">
+            <div className="p-1.5 bg-primary/10 rounded-md">
+              <Activity className="h-4 w-4 text-primary" />
+            </div>
+            Training Simulation
+          </CardTitle>
+        </CardHeader>
       <CardContent className="p-6 space-y-6">
         {/* Training Section */}
         <div className="space-y-3">
@@ -179,6 +233,7 @@ export function TrainingSimulation() {
             variant="hero" 
             className="w-full"
             onClick={handleSubmit}
+            disabled={!selectedTraining}
           >
             <Play className="h-4 w-4 mr-2" />
             Run Simulation
@@ -186,5 +241,6 @@ export function TrainingSimulation() {
         </div>
       </CardContent>
     </Card>
+    </div>
   )
 }

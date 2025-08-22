@@ -4,6 +4,7 @@ const trainingData: IDailyTrainingLog[] = [
     {
         date: "2025-08-01",
         exercise: "Long Run",
+        intensity: 8,
         duration: 45 * 60,
         distance: 8,
         pace: 300,
