@@ -15,6 +15,6 @@ export interface IDailyTrainingLog {
     cadence?: number, // in Step per Minute
     lactaseThresholdPace?: number, // in Second per Kilometer
     aerobicDecoupling?: number, // in Percent
-    oneMinHRR?: string[],
-    efficiencyFactor?: string[],
+    oneMinHRR?: number,
+    efficiencyFactor?: number,
 }

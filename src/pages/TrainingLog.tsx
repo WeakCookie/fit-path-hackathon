@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AIModal } from "@/components/ui/ai-modal"
-import { Calendar, Clock, Route, Zap, Pause, Brain, Target, ChevronDown, ChevronUp, Activity, TrendingUp, Minus, TrendingDown, Heart, Moon, Frown } from "lucide-react"
+import { TrainingSimulation } from "@/components/TrainingSimulation"
+import { Calendar, Clock, Route, Zap, Pause, Brain, Target, ChevronDown, ChevronUp } from "lucide-react"
 
 interface TrainingEntry {
   exercise: string
@@ -257,76 +258,7 @@ export default function TrainingLog() {
             </CardContent>
           </Card>
 
-          {/* Simulation Section */}
-          <Card className="shadow-lg border-0 mt-8">
-            <CardHeader className="bg-gradient-to-r from-muted/50 to-muted/30 border-b border-border/50">
-              <CardTitle className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 rounded-md">
-                  <Activity className="h-4 w-4 text-primary" />
-                </div>
-                Training Simulation
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-6">
-              {/* Training Section */}
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-fitness-orange" />
-                  Training
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="performance-up" className="animate-fade-in">
-                    <TrendingUp className="h-4 w-4" />
-                    Performance Increased
-                  </Button>
-                  <Button variant="performance-neutral" className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-                    <Minus className="h-4 w-4" />
-                    Performance Neutral
-                  </Button>
-                  <Button variant="performance-down" className="animate-fade-in" style={{ animationDelay: '200ms' }}>
-                    <TrendingDown className="h-4 w-4" />
-                    Performance Decreased
-                  </Button>
-                </div>
-              </div>
-
-              {/* Injury Section */}
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-red-500" />
-                  Injury
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="injury" className="animate-fade-in">
-                    <Frown className="h-4 w-4" />
-                    Knee hurt
-                  </Button>
-                  <Button variant="injury" className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-                    <Frown className="h-4 w-4" />
-                    Break ankle
-                  </Button>
-                </div>
-              </div>
-
-              {/* Recovery Section */}
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Moon className="h-5 w-5 text-blue-500" />
-                  Recovery
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="recovery" className="animate-fade-in">
-                    <Moon className="h-4 w-4" />
-                    Sleep under 6 hours
-                  </Button>
-                  <Button variant="recovery" className="animate-fade-in" style={{ animationDelay: '100ms' }}>
-                    <Frown className="h-4 w-4" />
-                    Sore legs
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <TrainingSimulation />
         </div>
       </div>
       </div>

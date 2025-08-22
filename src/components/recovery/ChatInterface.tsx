@@ -70,7 +70,7 @@ export function ChatInterface({ selectedDate }: ChatInterfaceProps) {
 
       {/* Suggested Questions */}
       <div className="mb-4">
-        <h3 className="text-sm font-medium text-muted-foreground mb-2">Suggested Questions</h3>
+        <h3 className="text-sm font-medium text-muted-foreground mb-2">Try Answering These Questions</h3>
         <div className="flex flex-wrap gap-2">
           {suggestedQuestions.map((question, index) => (
             <Badge

@@ -32,6 +32,10 @@ export function DateTimeline({ selectedDate, onDateSelect, recoveryData }: DateT
     }
   }
 
+  const handleToday = () => {
+    onDateSelect(today.toISOString().split('T')[0])
+  }
+
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -46,6 +50,14 @@ export function DateTimeline({ selectedDate, onDateSelect, recoveryData }: DateT
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToday}
+            className="h-8 px-3 text-xs"
+          >
+            Today
+          </Button>
+          <Button
             variant="ghost"
             size="icon"
             onClick={handleNext}
@@ -57,7 +69,7 @@ export function DateTimeline({ selectedDate, onDateSelect, recoveryData }: DateT
         </div>
       </div>
       
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="grid grid-cols-7 gap-2">
         {dates.map((date) => {
           const dateStr = date.toISOString().split('T')[0]
           const hasData = recoveryData.some(data => data.date === dateStr)
@@ -69,7 +81,7 @@ export function DateTimeline({ selectedDate, onDateSelect, recoveryData }: DateT
               key={dateStr}
               variant={isSelected ? "default" : "ghost"}
               onClick={() => onDateSelect(dateStr)}
-              className={`flex-shrink-0 flex flex-col items-center p-3 h-auto ${
+              className={`flex flex-col items-center p-3 h-auto w-full ${
                 isSelected ? "bg-fitness-orange text-fitness-orange-foreground" : ""
               }`}
             >

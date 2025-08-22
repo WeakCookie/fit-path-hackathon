@@ -9,6 +9,7 @@ import {
   Smartphone
 } from "lucide-react"
 import { IRecovery } from "@/types/recovery.schema"
+import { capitalize } from "lodash"
 
 interface ReadinessSectionProps {
   data?: IRecovery
@@ -138,12 +139,12 @@ export function ReadinessSection({ data, date }: ReadinessSectionProps) {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="h-4 w-4 text-red-500" />
-              <h3 className="text-sm font-medium text-muted-foreground">Injuries</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">Injuries (From Your Report)</h3>
             </div>
             <div className="space-y-1">
               {data.injury.map((injuryItem, index) => (
                 <div key={index} className="text-sm text-red-600 bg-red-50 p-2 rounded-md">
-                  {injuryItem}
+                  {(capitalize(injuryItem))}
                 </div>
               ))}
             </div>
