@@ -258,6 +258,64 @@ export default function TrainingLog() {
             </CardContent>
           </Card>
 
+          {/* Today's Summary Section */}
+          <Card className="shadow-lg border-0 mt-8">
+            <CardHeader className="bg-gradient-to-r from-fitness-orange/5 to-fitness-orange-hover/5 border-b border-border/50">
+              <CardTitle className="flex items-center gap-2">
+                <div className="p-1.5 bg-fitness-orange/10 rounded-md">
+                  <Calendar className="h-4 w-4 text-fitness-orange" />
+                </div>
+                Today's Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
+                  <Target className="h-5 w-5 text-fitness-orange" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Exercise</p>
+                    <p className="font-semibold">Long Run</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
+                  <Zap className="h-5 w-5 text-fitness-orange" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Intensity</p>
+                    <p className="font-semibold">8 RPE</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
+                  <Clock className="h-5 w-5 text-fitness-orange" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Duration</p>
+                    <p className="font-semibold">45 min</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
+                  <Route className="h-5 w-5 text-fitness-orange" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Distance</p>
+                    <p className="font-semibold">8 km</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
+                  <Clock className="h-5 w-5 text-fitness-orange" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pace</p>
+                    <p className="font-semibold">5:00 min/km</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
+                  <Zap className="h-5 w-5 text-fitness-orange" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Cadence</p>
+                    <p className="font-semibold">168 spm</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <TrainingSimulation />
         </div>
       </div>

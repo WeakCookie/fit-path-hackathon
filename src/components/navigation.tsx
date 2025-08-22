@@ -23,14 +23,24 @@ export function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <Link
-              to="/research-confidence"
+              to="/training-log"
               className={`text-sm font-medium transition-colors ${
-                isActive("/research-confidence") 
+                isActive("/training-log") 
                   ? "text-fitness-orange" 
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Research Confidence
+              Training Log
+            </Link>
+            <Link
+              to="/training-history"
+              className={`text-sm font-medium transition-colors ${
+                isActive("/training-history") 
+                  ? "text-fitness-orange" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Training History
             </Link>
             <Link
               to="/knowledge-base"
@@ -97,6 +107,17 @@ export function Navigation() {
                 onClick={() => setIsOpen(false)}
               >
                 Training Log
+              </Link>
+              <Link
+                to="/training-history"
+                className={`text-sm font-medium transition-colors ${
+                  isActive("/training-history") 
+                    ? "text-fitness-orange" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => setIsOpen(false)}
+              >
+                Training History
               </Link>
               <Link
                 to="/research-confidence"
