@@ -6,6 +6,13 @@ import { useState, useEffect } from 'react';
 import trainingData from '@/mock/training.mock';
 import { IDailyTrainingLog } from "@/types/daily.schema";
 
+// Interface for confidence score data
+export interface IResearchPaperConfidenceScore {
+  date: string
+  score: number
+  paperId: string
+}
+
 // Global training data store that can be modified throughout the application
 let globalTrainingData: IDailyTrainingLog[] = [...trainingData];
 
@@ -30,6 +37,78 @@ export const TRAINING_DATA = {
     globalTrainingData = [...trainingData];
   }
 };
+
+// Initial confidence data (can be empty or contain some starting values)
+let globalConfidenceData: IResearchPaperConfidenceScore[] = [
+  // Adding some mock confidence scores for testing badge functionality
+  {
+    date: "2024-12-20",
+    score: 1.2,
+    paperId: "3"
+  },
+  {
+    date: "2024-12-20", 
+    score: 1.8,
+    paperId: "4"
+  },
+  {
+    date: "2024-12-20",
+    score: 2.1,
+    paperId: "5"
+  }
+];
+
+// Global confidence data store that can be modified throughout the application
+export const CONFIDENCE_DATA = {
+  // Get current global confidence data (always sorted chronologically)
+  getData: (): IResearchPaperConfidenceScore[] => {
+    return [...globalConfidenceData].sort((a, b) => a.date.localeCompare(b.date));
+  },
+  
+  // Set new confidence data
+  setData: (data: IResearchPaperConfidenceScore[]): void => {
+    globalConfidenceData = [...data].sort((a, b) => a.date.localeCompare(b.date));
+  },
+  
+  // Add new confidence score entry
+  addScore: (data: IResearchPaperConfidenceScore): void => {
+    globalConfidenceData = [...globalConfidenceData, data].sort((a, b) => a.date.localeCompare(b.date));
+  },
+  
+  // Get latest confidence score for a specific paper
+  getLatestScore: (paperId: string): IResearchPaperConfidenceScore | null => {
+    const paperScores = globalConfidenceData.filter(item => item.paperId === paperId);
+    return paperScores.length > 0 ? paperScores[paperScores.length - 1] : null;
+  },
+  
+  // Reset to empty array
+  reset: (): void => {
+    globalConfidenceData = [];
+  }
+};
+
+/**
+ * Calculate prediction error and convert to confidence score
+ * @param predictedValue - The predicted value from external source (mock for now)
+ * @param actualValue - The actual value from latest training data
+ * @param metricType - Type of metric being compared (e.g., 'pace', 'distance', 'duration')
+ * @returns Confidence score between 0 and 1
+ */
+export function calculateConfidenceScore(
+  predictedValue: number,
+  actualValue: number,
+  metricType: string = 'pace'
+): number {
+  // Calculate percentage error
+  const percentageError = Math.abs((predictedValue - actualValue) / actualValue) * 100;
+  
+  // Convert error to confidence score (higher error = lower confidence)
+  // Using exponential decay function to map error to confidence
+  const confidence = Math.exp(-percentageError / 20); // 20% error gives ~0.37 confidence
+  
+  // Ensure confidence is between 0.1 and 1.0
+  return Math.max(0.1, Math.min(1.0, confidence));
+}
 
 // Global TODAY value that can be modified throughout the application
 let globalToday = new Date();
@@ -122,3 +201,34 @@ export const DateUtils = {
     return new Date(dateString);
   }
 };
+
+/**
+ * Generate pastel colors for research papers using chroma-js
+ * @param papers - Array of research papers to generate colors for
+ * @returns Record mapping paper names to their generated colors
+ */
+export const generatePastelColors = (papers: Array<{ name: string }>): Record<string, string> => {
+  const colors: Record<string, string> = {}
+  
+  papers.forEach((paper, index) => {
+    const hue = (index * 137.5) % 360
+    const saturation = 0.3 + (Math.random() * 0.2)
+    const lightness = 0.7 + (Math.random() * 0.2)
+    
+    // Using HSL to hex conversion without chroma-js dependency
+    const hslToHex = (h: number, s: number, l: number): string => {
+      l /= 100
+      const a = s * Math.min(l, 1 - l) / 100
+      const f = (n: number) => {
+        const k = (n + h / 30) % 12
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)
+        return Math.round(255 * color).toString(16).padStart(2, '0')
+      }
+      return `#${f(0)}${f(8)}${f(4)}`
+    }
+    
+    colors[paper.name] = hslToHex(hue, saturation * 100, lightness * 100)
+  })
+  
+  return colors
+}

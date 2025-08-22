@@ -111,7 +111,7 @@ export function calculateTrainingLogError(
   }
 
   // Return weighted average score, or 0 if no comparable metrics found
-  return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+  return totalWeight > 0 ? Math.round(totalScore / totalWeight) / 100 : 0;
 }
 
 /**

@@ -2,8 +2,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, TrendingUp, Minus, TrendingDown, Heart, Moon, Frown, Play } from "lucide-react"
-import { runSimulation } from "@/utils/performanceSimulation"
-import { TRAINING_DATA } from "@/utils"
+import { calculateTrainingLogError, runSimulation, WEIGHT_PRESETS } from "@/utils/performanceSimulation"
+import { TRAINING_DATA, CONFIDENCE_DATA } from "@/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { TODAY } from "@/utils"
 
@@ -113,11 +113,54 @@ export function TrainingSimulation() {
     // Update the global training data store
     TRAINING_DATA.setData(updatedData)
     
+		const mockPredictedValueData = [{
+			date: "2025-08-22",
+			pace: 300,
+			distance: 8,
+			duration: 45 * 60,
+			cadence: 168,
+			lactaseThresholdPace: 270,
+			aerobicDecoupling: 9.8,
+			paperId: "3"
+		}, {
+			date: "2025-08-22",
+			pace: 200,
+			distance: 8,
+			duration: 43 * 60,
+			cadence: 168,
+			lactaseThresholdPace: 270,
+			aerobicDecoupling: 9.8,
+			paperId: "4"
+		}]
+		
+		// Process each predicted value data entry
+		mockPredictedValueData.forEach(predictedData => {
+			// Calculate confidence score for this prediction
+			const calculatedScore = calculateTrainingLogError(updatedData[updatedData.length - 1], predictedData, WEIGHT_PRESETS.enduranceFocused)
+			
+			// Get the latest confidence score for this paper
+			const latestScore = CONFIDENCE_DATA.getLatestScore(predictedData.paperId)
+			
+			// Add the calculated score to the latest value (or start with 0 if no previous data)
+			const baseScore = latestScore ? latestScore.score : 0
+			const newScore = baseScore + calculatedScore
+			
+			// Create and add new confidence data point
+			const newConfidencePoint = {
+				date: TODAY.getISOString(),
+				score: newScore,
+				paperId: predictedData.paperId
+			}
+			
+			CONFIDENCE_DATA.addScore(newConfidencePoint)
+		})
+
+
     TODAY.advanceDay()
     
     toast({
       title: "Simulation Complete",
-      description: `Training simulation (${selectedOptions.training?.replace('-', ' ')}) has been run successfully. TODAY advanced to ${TODAY.getISOString()}. Check training History for results.`,
+      description: `Training simulation (${selectedOptions.training?.replace('-', ' ')}) has been run successfully. TODAY advanced to ${TODAY.getISOString()}. Check training History and Research Confidence for results.`,
     })
     
     // Reset selections for next simulation

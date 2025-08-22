@@ -1,35 +1,34 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { FileText, X, ChevronDown, ChevronUp } from "lucide-react"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts'
 import { capitalize } from "lodash"
 import chroma from "chroma-js"
 import researchData from "@/mock/research.mock.json"
+import { DateUtils, CONFIDENCE_DATA, TODAY, IResearchPaperConfidenceScore } from "@/utils"
+import { ResearchPaper } from "@/components/ResearchPaper"
+import { IResearchClaim } from "@/types/research.schema"
 
-// Generate confidence data for each research paper
-const generateConfidenceData = (papers: ResearchPaper[]) => {
-  const dates = [
-    '2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05',
-    '2024-01-06', '2024-01-07', '2024-01-08', '2024-01-09', '2024-01-10'
-  ]
+// Generate confidence data from real-time confidence scores
+const generateConfidenceDataFromReal = (papers: IResearchClaim[], realTimeData: IResearchPaperConfidenceScore[]) => {
+  // Get all unique dates from real-time data, sorted chronologically
+  const allDates = [...new Set(realTimeData.map(item => item.date))].sort()
   
-  return dates.map(date => {
+  return allDates.map(date => {
     const dataPoint: any = { date }
-    papers.forEach((paper, index) => {
-      // Generate realistic confidence scores based on paper characteristics
-      const baseScore = 0.7 + (index * 0.05) // Vary base scores
-      const variation = Math.sin(new Date(date).getTime() / 86400000 + index) * 0.1
-      dataPoint[paper.name] = Math.max(0.6, Math.min(0.95, baseScore + variation))
+    papers.forEach((paper) => {
+      // Find the confidence score for this paper and date
+      const confidenceScore = realTimeData.find(
+        item => item.paperId === paper.id && item.date === date
+      )
+      dataPoint[paper.name] = confidenceScore ? confidenceScore.score : 0.75 // fallback score
     })
     return dataPoint
   })
 }
 
 // Generate vibrant colors for chart lines using chroma-js
-const generateChartColors = (papers: ResearchPaper[]) => {
+const generateChartColors = (papers: IResearchClaim[]) => {
   const colors: Record<string, string> = {}
   
   papers.forEach((paper, index) => {
@@ -45,7 +44,7 @@ const generateChartColors = (papers: ResearchPaper[]) => {
 }
 
 // Generate pastel colors for paper borders using chroma-js
-const generatePastelColors = (papers: ResearchPaper[]) => {
+const generatePastelColors = (papers: IResearchClaim[]) => {
   const colors: Record<string, string> = {}
   
   papers.forEach((paper, index) => {
@@ -60,43 +59,34 @@ const generatePastelColors = (papers: ResearchPaper[]) => {
   return colors
 }
 
-interface ResearchPaper {
-  id: string
-  goal?: string
-  name: string
-  originalText: string
-  methodology: {
-    sampleSize: string
-    participantBackground: {
-      gender: string
-      age: { from: number; to: number; unit: string }
-      height: { from: number; to: number; unit: string }
-      weight: { from: number; to: number; unit: string }
-      experience: { from: number; to: number; unit: string }
-      nationality: string[]
-    }
-  }
-  dailyClaim: Record<string, string[]>
-  recoveryClaim: Record<string, string[]>
-  programClaim: Record<string, string[]>
-}
-
 export default function ResearchConfidence() {
-  const [selectedPaper, setSelectedPaper] = useState<ResearchPaper | null>(null)
+  const [selectedPaper, setSelectedPaper] = useState<IResearchClaim | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [showOriginalText, setShowOriginalText] = useState(false)
-  const [showMethodology, setShowMethodology] = useState(true)
-  const [showDailyClaims, setShowDailyClaims] = useState(true)
-  const [showProgramClaims, setShowProgramClaims] = useState(true)
-  const [showRecoveryClaims, setShowRecoveryClaims] = useState(true)
   const [hoveredPaper, setHoveredPaper] = useState<string | null>(null)
+  const [realTimeConfidenceData, setRealTimeConfidenceData] = useState<IResearchPaperConfidenceScore[]>([])
 
-  const data = researchData.filter(paper => paper.goal === 'endurance')
-  const confidenceData = generateConfidenceData(data)
+  const data = researchData.filter(paper => paper.goal === 'endurance') as IResearchClaim[]
+  
+  // Subscribe to TODAY changes to refresh confidence data when simulations run
+  useEffect(() => {
+    const updateConfidenceData = () => {
+      setRealTimeConfidenceData(CONFIDENCE_DATA.getData())
+    }
+    
+    // Initial load
+    updateConfidenceData()
+    
+    // Subscribe to TODAY changes (when simulations run)
+    const unsubscribe = TODAY._subscribe(updateConfidenceData)
+    
+    return unsubscribe
+  }, [])
+  
+  const confidenceData = generateConfidenceDataFromReal(data, realTimeConfidenceData)
   const chartColors = useMemo(() => generateChartColors(data), [data])
   const pastelColors = useMemo(() => generatePastelColors(data), [data])
 
-  const handlePaperClick = (paper: ResearchPaper) => {
+  const handlePaperClick = (paper: IResearchClaim) => {
     setSelectedPaper(paper)
     setIsModalOpen(true)
   }
@@ -104,11 +94,6 @@ export default function ResearchConfidence() {
   const closeModal = () => {
     setIsModalOpen(false)
     setSelectedPaper(null)
-    setShowOriginalText(false)
-    setShowMethodology(true)
-    setShowDailyClaims(true)
-    setShowProgramClaims(true)
-    setShowRecoveryClaims(true)
   }
 
   return (
@@ -141,7 +126,7 @@ export default function ResearchConfidence() {
                     dataKey="date" 
                     className="text-muted-foreground"
                     tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    tickFormatter={(value) => DateUtils.toDisplayString(value)}
                   />
                   <YAxis 
                     domain={[0.7, 0.9]}
@@ -172,8 +157,6 @@ export default function ResearchConfidence() {
           </CardContent>
         </Card>
 
-
-
         {/* Research Papers Section */}
         <Card>
           <CardHeader>
@@ -184,234 +167,42 @@ export default function ResearchConfidence() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
-              {data.map((paper: ResearchPaper) => {
+              {data.map((paper: IResearchClaim) => {
                 const isHighlighted = hoveredPaper === paper.name
                 
                 return (
-                <div
-                  key={paper.id}
-                  className={`p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
-                    isHighlighted 
-                      ? 'shadow-lg scale-105 bg-accent/80' 
-                      : 'hover:bg-accent/50'
-                  }`}
-                  style={{
-                    borderColor: isHighlighted 
-                      ? pastelColors[paper.name] || '#888888'
-                      : pastelColors[paper.name] || '#888888'
-                  }}
-                  onClick={() => handlePaperClick(paper)}
-                >
-                  <div className="flex items-start gap-3">
-                    <div 
-                      className="w-4 h-4 rounded-full border-2 border-white shadow-sm flex-shrink-0 mt-1" 
-                      style={{ backgroundColor: pastelColors[paper.name] || '#888888' }}
+                  <div
+                    key={paper.id}
+                    className={`transition-all duration-200 ${
+                      isHighlighted 
+                        ? 'shadow-lg scale-105' 
+                        : ''
+                    }`}
+                    onMouseEnter={() => setHoveredPaper(paper.name)}
+                    onMouseLeave={() => setHoveredPaper(null)}
+                  >
+                    <ResearchPaper
+                      mode="card"
+                      paper={paper}
+                      borderColor={pastelColors[paper.name]}
+                      onClick={handlePaperClick}
                     />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-2">
-                        {paper.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        {paper.goal && `Goal: ${capitalize(paper.goal)} • `}Sample: {paper.methodology.sampleSize} participants
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {paper.methodology.participantBackground.nationality.join(", ")} • {paper.methodology.participantBackground.gender}
-                        </span>
-                        <Button variant="ghost" size="sm" className="text-xs h-6 px-2">
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
                   </div>
-                </div>
-              )})}
+                )
+              })}
             </div>
           </CardContent>
         </Card>
 
         {/* Research Paper Modal */}
-        <Dialog open={isModalOpen} onOpenChange={closeModal}>
-          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="flex flex-row items-center gap-3">
-              <div className="p-2.5 bg-fitness-orange/10 rounded-lg">
-                <FileText className="h-5 w-5 text-fitness-orange" />
-              </div>
-              <div className="flex-1">
-                <DialogTitle className="text-lg font-semibold">
-                  Research Paper Details
-                </DialogTitle>
-              </div>
-            </DialogHeader>
-            
-            {selectedPaper && (
-              <div className="mt-4 space-y-6">
-                <div>
-                  <h3 className="font-semibold text-lg text-foreground mb-2">
-                    {selectedPaper.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedPaper.goal && `Goal: ${capitalize(selectedPaper.goal)}`}
-                  </p>
-                </div>
-                
-                {/* Methodology Section */}
-                <div className="p-4 bg-fitness-orange/5 rounded-lg border-2 border-fitness-orange/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-lg text-foreground">Methodology</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowMethodology(!showMethodology)}
-                      className="p-1 h-8 w-8"
-                    >
-                      {showMethodology ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showMethodology ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p><strong>Sample Size:</strong> {selectedPaper.methodology.sampleSize} participants</p>
-                      <p><strong>Gender:</strong> {selectedPaper.methodology.participantBackground.gender}</p>
-                      <p><strong>Age Range:</strong> {selectedPaper.methodology.participantBackground.age.from}-{selectedPaper.methodology.participantBackground.age.to} {selectedPaper.methodology.participantBackground.age.unit}</p>
-                      <p><strong>Height Range:</strong> {selectedPaper.methodology.participantBackground.height.from}-{selectedPaper.methodology.participantBackground.height.to} {selectedPaper.methodology.participantBackground.height.unit}</p>
-                      <p><strong>Weight Range:</strong> {selectedPaper.methodology.participantBackground.weight.from}-{selectedPaper.methodology.participantBackground.weight.to} {selectedPaper.methodology.participantBackground.weight.unit}</p>
-                      <p><strong>Experience:</strong> {selectedPaper.methodology.participantBackground.experience.from}-{selectedPaper.methodology.participantBackground.experience.to} {selectedPaper.methodology.participantBackground.experience.unit}</p>
-                      <p><strong>Nationality:</strong> {selectedPaper.methodology.participantBackground.nationality.join(", ")}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Daily Claims Section */}
-                <div className="p-4 bg-fitness-orange/5 rounded-lg border-2 border-fitness-orange/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-lg text-foreground">Daily Claims</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowDailyClaims(!showDailyClaims)}
-                      className="p-1 h-8 w-8"
-                    >
-                      {showDailyClaims ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showDailyClaims ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="space-y-3">
-                      {Object.entries(selectedPaper.dailyClaim).map(([key, claims]) => (
-                        <div key={key}>
-                          <h5 className="font-medium text-xs text-foreground mb-2 capitalize">
-                            {key.replace(/([A-Z])/g, ' $1').trim()}
-                          </h5>
-                          <ul className="list-disc list-inside space-y-1">
-                            {claims.map((claim, index) => (
-                              <li key={index} className="text-sm text-muted-foreground">
-                                {claim}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-                {/* Program Claims Section */}
-                <div className="p-4 bg-fitness-orange/5 rounded-lg border-2 border-fitness-orange/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-lg text-foreground">Program Claims</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowProgramClaims(!showProgramClaims)}
-                      className="p-1 h-8 w-8"
-                    >
-                      {showProgramClaims ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showProgramClaims ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="space-y-3">
-                      {Object.entries(selectedPaper.programClaim).map(([key, claims]) => (
-                        <div key={key}>
-                          <h5 className="font-medium text-xs text-foreground mb-2 capitalize">
-                            {key.replace(/([A-Z])/g, ' $1').trim()}
-                          </h5>
-                          <ul className="list-disc list-inside space-y-1">
-                            {claims.map((claim, index) => (
-                              <li key={index} className="text-sm text-muted-foreground">
-                                {claim}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-                {/* Recovery Claims Section */}
-                <div className="p-4 bg-fitness-orange/5 rounded-lg border-2 border-fitness-orange/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-lg text-foreground">Recovery Claims</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowRecoveryClaims(!showRecoveryClaims)}
-                      className="p-1 h-8 w-8"
-                    >
-                      {showRecoveryClaims ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showRecoveryClaims ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="space-y-3">
-                      {Object.entries(selectedPaper.recoveryClaim).map(([key, claims]) => (
-                        <div key={key}>
-                          <h5 className="font-medium text-xs text-foreground mb-2 capitalize">
-                            {key.replace(/([A-Z])/g, ' $1').trim()}
-                          </h5>
-                          <ul className="list-disc list-inside space-y-1">
-                            {claims.map((claim, index) => (
-                              <li key={index} className="text-sm text-muted-foreground">
-                                {claim}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-                {/* Original Text Section */}
-                <div className="p-4 bg-accent/20 rounded-lg border border-border/50">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-lg text-foreground">Original Text</h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowOriginalText(!showOriginalText)}
-                      className="p-1 h-8 w-8"
-                    >
-                      {showOriginalText ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showOriginalText ? 'max-h-none opacity-100' : 'max-h-20 opacity-100'}`}>
-                    <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-                      {selectedPaper.originalText.split('\n\n').map((paragraph, index) => (
-                        <p key={index} className={`mb-3 ${!showOriginalText && index >= 1 ? 'hidden' : ''} ${!showOriginalText && index === 0 ? 'line-clamp-3' : ''}`}>
-                          {paragraph}
-                        </p>
-                      ))}
-                      {!showOriginalText && (
-                        <div className="text-xs text-muted-foreground/70 italic">
-                          ... (click to expand full text)
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+        {selectedPaper && (
+          <ResearchPaper
+            mode="modal"
+            paper={selectedPaper}
+            isOpen={isModalOpen}
+            onClose={closeModal}
+          />
+        )}
       </main>
       </div>
     </div>

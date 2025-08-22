@@ -63,3 +63,10 @@ interface IProgramClaim {
     injuryPrevention?: string[]
     performanceImprovementExpected?: string[]
 }
+
+export interface IUserPaper {
+    id: string
+    name: string
+    file: File
+    uploadedAt: Date
+}
