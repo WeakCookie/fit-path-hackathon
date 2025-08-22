@@ -2,17 +2,22 @@ import { IDailyTrainingLog } from "@/types/daily.schema";
 import { TrainingSimulationId } from "@/components/TrainingSimulation";
 import { TODAY } from "./index";
 
+// Re-export the error calculation function for convenience
+export { calculateTrainingLogError, WEIGHT_PRESETS, type TrainingLogWeights } from "./trainingLogError";
+
 /**
  * Runs simulation on the last element of training data array and appends result to the end
  * @param dataArray - Array of training log data
  * @param simulationType - The type of simulation to apply ('performance-up', 'performance-neutral', 'performance-down')
  * @param factor - Factor to control the amount of variation (0.05 = 5% default)
+ * @param simpleMode - If true, uses factor as direct percentage change (e.g., 0.1 = 10% change)
  * @returns New array with simulated data appended to the end
  */
 export function runSimulation(
   dataArray: IDailyTrainingLog[],
   simulationType: TrainingSimulationId,
-  factor: number = 0.05
+  factor: number = 0.1,
+  simpleMode: boolean = false
 ): IDailyTrainingLog[] {
   if (dataArray.length === 0) {
     return dataArray;
@@ -23,7 +28,7 @@ export function runSimulation(
   const lastElement = sortedData[sortedData.length - 1];
   
   // Run simulation on the most recent element
-  const simulatedData = simulateData(lastElement, simulationType, factor);
+  const simulatedData = simulateData(lastElement, simulationType, factor, simpleMode);
 
   // Return new array with simulated data appended
   return [...dataArray, simulatedData];
@@ -35,7 +40,8 @@ export function runSimulation(
 function simulateData(
   data: IDailyTrainingLog,
   simulationType: TrainingSimulationId,
-  factor: number
+  factor: number,
+  simpleMode: boolean = false
 ): IDailyTrainingLog {
   const updated = { ...data };
   
@@ -44,11 +50,11 @@ function simulateData(
 
   switch (simulationType) {
     case TrainingSimulationId.PERFORMANCE_UP:
-      return simulateImprovement(updated, factor);
+      return simpleMode ? simulateSimpleImprovement(updated, factor) : simulateImprovement(updated, factor);
     case TrainingSimulationId.PERFORMANCE_DOWN:
-      return simulateDecline(updated, factor);
+      return simpleMode ? simulateSimpleDecline(updated, factor) : simulateDecline(updated, factor);
     case TrainingSimulationId.PERFORMANCE_NEUTRAL:
-      return simulateStable(updated, factor);
+      return simpleMode ? simulateSimpleStable(updated, factor) : simulateStable(updated, factor);
     default:
       return updated;
   }
@@ -140,4 +146,74 @@ function simulateStable(
   };
 }
 
+/**
+ * Simple performance improvement simulation
+ * Uses factor directly as percentage improvement (e.g., 0.1 = 10% improvement)
+ */
+function simulateSimpleImprovement(
+  trainingLog: IDailyTrainingLog,
+  factor: number
+): IDailyTrainingLog {
+  const improvementFactor = 1 + factor; // Direct percentage improvement
+
+  return {
+    ...trainingLog,
+    duration: trainingLog.duration ? Math.round(trainingLog.duration * improvementFactor) : undefined,
+    distance: trainingLog.distance ? Math.round((trainingLog.distance * improvementFactor) * 100) / 100 : undefined,
+    pace: trainingLog.pace ? Math.round(trainingLog.pace / improvementFactor) : undefined,
+    cadence: trainingLog.cadence ? Math.round(trainingLog.cadence * improvementFactor) : undefined,
+    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace / improvementFactor) : undefined,
+    aerobicDecoupling: trainingLog.aerobicDecoupling ? Math.round((trainingLog.aerobicDecoupling * (1 - factor)) * 10) / 10 : undefined,
+    oneMinHRR: trainingLog.oneMinHRR ? Math.round(trainingLog.oneMinHRR * improvementFactor) : undefined,
+    efficiencyFactor: trainingLog.efficiencyFactor ? Math.round((trainingLog.efficiencyFactor * improvementFactor) * 100) / 100 : undefined,
+  };
+}
+
+/**
+ * Simple performance decline simulation
+ * Uses factor directly as percentage decline (e.g., 0.1 = 10% decline)
+ */
+function simulateSimpleDecline(
+  trainingLog: IDailyTrainingLog,
+  factor: number
+): IDailyTrainingLog {
+  const declineFactor = 1 - factor; // Direct percentage decline
+
+  return {
+    ...trainingLog,
+    duration: trainingLog.duration ? Math.round(trainingLog.duration * declineFactor) : undefined,
+    distance: trainingLog.distance ? Math.round((trainingLog.distance * declineFactor) * 100) / 100 : undefined,
+    pace: trainingLog.pace ? Math.round(trainingLog.pace / declineFactor) : undefined,
+    cadence: trainingLog.cadence ? Math.round(trainingLog.cadence * declineFactor) : undefined,
+    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace / declineFactor) : undefined,
+    aerobicDecoupling: trainingLog.aerobicDecoupling ? Math.round((trainingLog.aerobicDecoupling * (1 + factor)) * 10) / 10 : undefined,
+    oneMinHRR: trainingLog.oneMinHRR ? Math.round(trainingLog.oneMinHRR * declineFactor) : undefined,
+    efficiencyFactor: trainingLog.efficiencyFactor ? Math.round((trainingLog.efficiencyFactor * declineFactor) * 100) / 100 : undefined,
+  };
+}
+
+/**
+ * Simple stable performance simulation
+ * Uses factor as small fluctuation range (e.g., 0.1 = ±5% random fluctuation)
+ */
+function simulateSimpleStable(
+  trainingLog: IDailyTrainingLog,
+  factor: number
+): IDailyTrainingLog {
+  // Use half the factor for fluctuation range to keep changes small
+  const fluctuationRange = factor * 0.5;
+  const variation = () => 1 + (Math.random() - 0.5) * fluctuationRange;
+
+  return {
+    ...trainingLog,
+    duration: trainingLog.duration ? Math.round(trainingLog.duration * variation()) : undefined,
+    distance: trainingLog.distance ? Math.round((trainingLog.distance * variation()) * 100) / 100 : undefined,
+    pace: trainingLog.pace ? Math.round(trainingLog.pace * variation()) : undefined,
+    cadence: trainingLog.cadence ? Math.round(trainingLog.cadence * variation()) : undefined,
+    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace * variation()) : undefined,
+    aerobicDecoupling: trainingLog.aerobicDecoupling ? Math.round((trainingLog.aerobicDecoupling * variation()) * 10) / 10 : undefined,
+    oneMinHRR: trainingLog.oneMinHRR ? Math.round(trainingLog.oneMinHRR * variation()) : undefined,
+    efficiencyFactor: trainingLog.efficiencyFactor ? Math.round((trainingLog.efficiencyFactor * variation()) * 100) / 100 : undefined,
+  };
+}
 

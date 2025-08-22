@@ -5,7 +5,6 @@ import { Activity, TrendingUp, Minus, TrendingDown, Heart, Moon, Frown, Play } f
 import { runSimulation } from "@/utils/performanceSimulation"
 import { TRAINING_DATA } from "@/utils"
 import { useToast } from "@/components/ui/use-toast"
-import { IDailyTrainingLog } from "@/types/daily.schema"
 import { TODAY } from "@/utils"
 
 export enum TrainingSimulationId {
@@ -108,7 +107,7 @@ export function TrainingSimulation() {
     
     // Get current global training data and run simulation
     const currentData = TRAINING_DATA.getData()
-    const updatedData = runSimulation(currentData, selectedTraining as TrainingSimulationId)
+    const updatedData = runSimulation(currentData, selectedTraining as TrainingSimulationId, 0.1, true)
     console.log("Updated data after simulation:", updatedData)
     
     // Update the global training data store

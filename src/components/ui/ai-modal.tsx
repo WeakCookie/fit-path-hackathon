@@ -26,14 +26,6 @@ export function AIModal({ isOpen, onClose, type, title, reasoning }: AIModalProp
           <DialogTitle className="text-lg font-semibold">
             {title}
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="ml-auto"
-            onClick={onClose}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
         
         <div className="mt-4">
