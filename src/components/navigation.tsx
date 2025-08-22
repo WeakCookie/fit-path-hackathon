@@ -23,16 +23,6 @@ export function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <Link
-              to="/training-log"
-              className={`text-sm font-medium transition-colors ${
-                isActive("/training-log") 
-                  ? "text-fitness-orange" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Training Log
-            </Link>
-            <Link
               to="/training-history"
               className={`text-sm font-medium transition-colors ${
                 isActive("/training-history") 
@@ -51,6 +41,16 @@ export function Navigation() {
               }`}
             >
               Knowledge Base
+            </Link>
+            <Link
+              to="/research-confidence"
+              className={`text-sm font-medium transition-colors ${
+                isActive("/research-confidence") 
+                  ? "text-fitness-orange" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Research Confidence
             </Link>
             <Link
               to="/recovery"

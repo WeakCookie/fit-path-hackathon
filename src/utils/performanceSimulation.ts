@@ -1,5 +1,6 @@
 import { IDailyTrainingLog } from "@/types/daily.schema";
 import { TrainingSimulationId } from "@/components/TrainingSimulation";
+import { TODAY } from "./index";
 
 /**
  * Runs simulation on the last element of training data array and appends result to the end
@@ -17,10 +18,11 @@ export function runSimulation(
     return dataArray;
   }
 
-  // Get the last element
-  const lastElement = dataArray[dataArray.length - 1];
+  // Get the most recent element by date (not by array position)
+  const sortedData = [...dataArray].sort((a, b) => a.date.localeCompare(b.date));
+  const lastElement = sortedData[sortedData.length - 1];
   
-  // Run simulation on the last element
+  // Run simulation on the most recent element
   const simulatedData = simulateData(lastElement, simulationType, factor);
 
   // Return new array with simulated data appended
@@ -36,6 +38,9 @@ function simulateData(
   factor: number
 ): IDailyTrainingLog {
   const updated = { ...data };
+  
+  // Set the date to TODAY's value for the new simulated data
+  updated.date = TODAY.getISOString();
 
   switch (simulationType) {
     case TrainingSimulationId.PERFORMANCE_UP:

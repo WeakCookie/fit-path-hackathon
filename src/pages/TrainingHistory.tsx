@@ -5,49 +5,50 @@ import { Button } from "@/components/ui/button"
 import { DateTimeline } from "@/components/recovery/DateTimeline"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Clock, Route, Target, Zap, TrendingUp, TrendingDown, Activity } from "lucide-react"
-import trainingData from "@/mock/training.mock"
+import { useToday, TRAINING_DATA } from "@/utils"
 
-const mockTrainingData = [
-  {
-    date: "2025-08-01",
-    exercise: "Long Run",
-    intensity: 8,
-    duration: 45 * 60,
-    distance: 8,
-    pace: 300,
-    cadence: 168,
-    lactaseThresholdPace: 270,
-    aerobicDecoupling: 9.8,
-    oneMinHRR: 26,
-    efficiencyFactor: 0.65
-  },
-  {
-    date: "2025-08-02",
-    exercise: "Interval Training",
-    intensity: 9,
-    duration: 35 * 60,
-    distance: 6,
-    pace: 280,
-    cadence: 172,
-    lactaseThresholdPace: 265,
-    aerobicDecoupling: 8.5,
-    oneMinHRR: 28,
-    efficiencyFactor: 0.68
-  },
-  {
-    date: "2025-08-03",
-    exercise: "Easy Run",
-    intensity: 5,
-    duration: 30 * 60,
-    distance: 5,
-    pace: 320,
-    cadence: 165,
-    lactaseThresholdPace: 275,
-    aerobicDecoupling: 7.2,
-    oneMinHRR: 24,
-    efficiencyFactor: 0.62
-  }
-]
+// Get extended training data with additional static entries for demonstration
+const getExtendedTrainingData = () => {
+  const baseData = TRAINING_DATA.getData()
+  const staticExtensions = [
+    {
+      date: "2025-08-02", 
+      exercise: "Interval Training",
+      intensity: 9,
+      duration: 35 * 60,
+      distance: 6,
+      pace: 280,
+      cadence: 172,
+      lactaseThresholdPace: 265,
+      aerobicDecoupling: 8.5,
+      oneMinHRR: 28,
+      efficiencyFactor: 0.68
+    },
+    {
+      date: "2025-08-03",
+      exercise: "Easy Run", 
+      intensity: 5,
+      duration: 30 * 60,
+      distance: 5,
+      pace: 320,
+      cadence: 165,
+      lactaseThresholdPace: 275,
+      aerobicDecoupling: 7.2,
+      oneMinHRR: 24,
+      efficiencyFactor: 0.62
+    }
+  ]
+  
+  // Combine base data with static extensions, removing duplicates by date
+  const allData = [...baseData]
+  staticExtensions.forEach(staticEntry => {
+    if (!allData.some(entry => entry.date === staticEntry.date)) {
+      allData.push(staticEntry)
+    }
+  })
+  
+  return allData.sort((a, b) => a.date.localeCompare(b.date))
+}
 
 const formatTime = (seconds: number) => {
   const hours = Math.floor(seconds / 3600)
@@ -65,10 +66,16 @@ const formatPace = (seconds: number) => {
 }
 
 export default function TrainingHistory() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const today = useToday()
+  const [selectedDate, setSelectedDate] = useState(today.isoString)
   const [selectedMetric, setSelectedMetric] = useState<'pace' | 'lactaseThresholdPace' | 'aerobicDecoupling' | 'oneMinHRR' | 'efficiencyFactor'>('pace')
 
-  const selectedTraining = mockTrainingData.find(data => data.date === selectedDate)
+  // Get current training data and filter to only include dates up to TODAY
+  // This ensures charts end at TODAY and don't show future data
+  const extendedTrainingData = getExtendedTrainingData()
+  const filteredTrainingData = extendedTrainingData.filter(data => data.date <= today.isoString)
+  
+  const selectedTraining = filteredTrainingData.find(data => data.date === selectedDate)
 
   const metricInfo = {
     pace: { label: "Pace", unit: "min/km", better: "lower", icon: Clock },
@@ -78,7 +85,7 @@ export default function TrainingHistory() {
     efficiencyFactor: { label: "Efficiency Factor", unit: "", better: "higher", icon: TrendingUp }
   }
 
-  const chartData = mockTrainingData.map(data => ({
+  const chartData = filteredTrainingData.map(data => ({
     date: data.date,
     value: selectedMetric === 'pace' || selectedMetric === 'lactaseThresholdPace' 
       ? data[selectedMetric] / 60 // Convert to minutes
@@ -106,7 +113,7 @@ export default function TrainingHistory() {
               <DateTimeline 
                 selectedDate={selectedDate}
                 onDateSelect={setSelectedDate}
-                recoveryData={mockTrainingData.map(data => ({ date: data.date }))}
+                recoveryData={filteredTrainingData.map(data => ({ date: data.date }))}
               />
             </div>
 

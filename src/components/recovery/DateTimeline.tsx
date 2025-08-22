@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { IRecovery } from "@/types/recovery.schema"
 import { format, subDays, addDays } from "date-fns"
+import { useToday, DateUtils } from "@/utils"
 
 interface DateTimelineProps {
   selectedDate: string
@@ -11,7 +12,7 @@ interface DateTimelineProps {
 }
 
 export function DateTimeline({ selectedDate, onDateSelect, recoveryData }: DateTimelineProps) {
-  const today = new Date()
+  const today = useToday()
   const selectedDateObj = new Date(selectedDate)
   
   // Generate 7 days around selected date
@@ -22,18 +23,18 @@ export function DateTimeline({ selectedDate, onDateSelect, recoveryData }: DateT
 
   const handlePrevious = () => {
     const newDate = subDays(selectedDateObj, 1)
-    onDateSelect(newDate.toISOString().split('T')[0])
+    onDateSelect(DateUtils.toISOString(newDate))
   }
 
   const handleNext = () => {
     const nextDate = addDays(selectedDateObj, 1)
-    if (nextDate <= today) {
-      onDateSelect(nextDate.toISOString().split('T')[0])
+    if (nextDate <= today.date) {
+      onDateSelect(DateUtils.toISOString(nextDate))
     }
   }
 
   const handleToday = () => {
-    onDateSelect(today.toISOString().split('T')[0])
+    onDateSelect(today.isoString)
   }
 
   return (
@@ -61,7 +62,7 @@ export function DateTimeline({ selectedDate, onDateSelect, recoveryData }: DateT
             variant="ghost"
             size="icon"
             onClick={handleNext}
-            disabled={addDays(selectedDateObj, 1) > today}
+            disabled={addDays(selectedDateObj, 1) > today.date}
             className="h-8 w-8"
           >
             <ChevronRight className="h-4 w-4" />
@@ -71,10 +72,10 @@ export function DateTimeline({ selectedDate, onDateSelect, recoveryData }: DateT
       
       <div className="grid grid-cols-7 gap-2">
         {dates.map((date) => {
-          const dateStr = date.toISOString().split('T')[0]
+          const dateStr = DateUtils.toISOString(date)
           const hasData = recoveryData.some(data => data.date === dateStr)
           const isSelected = dateStr === selectedDate
-          const isToday = dateStr === today.toISOString().split('T')[0]
+          const isToday = dateStr === today.isoString
           
           return (
             <Button

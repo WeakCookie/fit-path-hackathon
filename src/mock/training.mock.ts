@@ -2,7 +2,7 @@ import { IDailyTrainingLog } from "@/types/daily.schema";
 
 const trainingData: IDailyTrainingLog[] = [
     {
-        date: "2025-08-01",
+        date: "2025-08-21",
         exercise: "Long Run",
         intensity: 8,
         duration: 45 * 60,

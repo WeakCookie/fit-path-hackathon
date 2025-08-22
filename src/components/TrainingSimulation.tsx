@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, TrendingUp, Minus, TrendingDown, Heart, Moon, Frown, Play } from "lucide-react"
 import { runSimulation } from "@/utils/performanceSimulation"
-import trainingData from "@/mock/training.mock"
+import { TRAINING_DATA } from "@/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { IDailyTrainingLog } from "@/types/daily.schema"
+import { TODAY } from "@/utils"
 
 export enum TrainingSimulationId {
   PERFORMANCE_UP = "performance-up",
@@ -68,7 +69,6 @@ export function TrainingSimulation() {
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null)
   const [selectedInjuries, setSelectedInjuries] = useState<Set<string>>(new Set())
   const [selectedRecoveries, setSelectedRecoveries] = useState<Set<string>>(new Set())
-  const [currentTrainingData, setCurrentTrainingData] = useState<IDailyTrainingLog[]>(trainingData)
   const { toast } = useToast()
 
   const handleTrainingClick = (training: string) => {
@@ -106,33 +106,25 @@ export function TrainingSimulation() {
       recoveries: Array.from(selectedRecoveries)
     }
     
-    // Run simulation if a training type is selected
-    if (selectedTraining && Object.values(TrainingSimulationId).includes(selectedTraining as TrainingSimulationId)) {
-      const updatedData = runSimulation(currentTrainingData, selectedTraining as TrainingSimulationId)
-      console.log("Updated data after simulation:", updatedData)
-      
-      // Update the training data array for future simulations
-      setCurrentTrainingData(updatedData)
-      
-      // Show success toast
-      toast({
-        title: "Simulation Complete",
-        description: `Training simulation (${selectedOptions.training?.replace('-', ' ')}) has been run successfully. Check training History for results.`,
-      })
-      
-      // Reset selections for next simulation
-      setSelectedTraining(null)
-      setSelectedInjuries(new Set())
-      setSelectedRecoveries(new Set())
-    } else {
-      // Show error toast
-      toast({
-        title: "Simulation Error",
-        description: "Please select a training simulation type before running.",
-        variant: "destructive"
-      })
-      console.log("No training simulation selected")
-    }
+    // Get current global training data and run simulation
+    const currentData = TRAINING_DATA.getData()
+    const updatedData = runSimulation(currentData, selectedTraining as TrainingSimulationId)
+    console.log("Updated data after simulation:", updatedData)
+    
+    // Update the global training data store
+    TRAINING_DATA.setData(updatedData)
+    
+    TODAY.advanceDay()
+    
+    toast({
+      title: "Simulation Complete",
+      description: `Training simulation (${selectedOptions.training?.replace('-', ' ')}) has been run successfully. TODAY advanced to ${TODAY.getISOString()}. Check training History for results.`,
+    })
+    
+    // Reset selections for next simulation
+    setSelectedTraining(null)
+    setSelectedInjuries(new Set())
+    setSelectedRecoveries(new Set())
   }
 
   return (

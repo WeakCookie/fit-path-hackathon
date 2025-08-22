@@ -6,14 +6,16 @@ import { ReadinessSection } from "@/components/recovery/ReadinessSection"
 import { DetailsSection } from "@/components/recovery/DetailsSection"
 import recoveryData from "@/mock/recovery.mock"
 import { IRecovery } from "@/types/recovery.schema"
+import { useToday } from "@/utils"
 
 export default function Recovery() {
+  const today = useToday()
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    today.isoString
   )
   
   const selectedDayData = recoveryData.find(data => data.date === selectedDate)
-  const isToday = selectedDate === new Date().toISOString().split('T')[0]
+  const isToday = selectedDate === today.isoString
 
   return (
     <div className="min-h-screen bg-background">
