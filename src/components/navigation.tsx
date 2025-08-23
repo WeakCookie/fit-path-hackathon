@@ -23,14 +23,14 @@ export function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
             <Link
-              to="/training-history"
+              to="/program"
               className={`text-sm font-medium transition-colors ${
-                isActive("/training-history") 
+                isActive("/program") 
                   ? "text-fitness-orange" 
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Training History
+              Program
             </Link>
             <Link
               to="/knowledge-base"
@@ -43,14 +43,14 @@ export function Navigation() {
               Knowledge Base
             </Link>
             <Link
-              to="/research-confidence"
+              to="/training-history"
               className={`text-sm font-medium transition-colors ${
-                isActive("/research-confidence") 
+                isActive("/training-history") 
                   ? "text-fitness-orange" 
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Research Confidence
+              Training History
             </Link>
             <Link
               to="/recovery"
@@ -63,14 +63,14 @@ export function Navigation() {
               Recovery
             </Link>
             <Link
-              to="/program"
+              to="/research-confidence"
               className={`text-sm font-medium transition-colors ${
-                isActive("/program") 
+                isActive("/research-confidence") 
                   ? "text-fitness-orange" 
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Program
+              Research Confidence
             </Link>
             <Button 
               variant="hero" 

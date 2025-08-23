@@ -11,7 +11,7 @@
         },
         {
           "type": "intensity",
-          "modified_value": "RPE 5",
+          "modified_value": 5,
           "reasoning": "Reducing intensity to RPE 5 allows for active recovery and addresses fatigue markers such as elevated aerobic decoupling, supporting performance stability and injury prevention.",
           "reference": "When sleep duration is less than 5 hours, participants can only perform at 70% of their normal training weight"
         },

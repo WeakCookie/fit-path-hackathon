@@ -9,7 +9,7 @@ import {
 import { IDailyTrainingLog } from '@/types/daily.schema'
 import mockAIServerResponse from '../../mock_ai_server_response.json'
 
-export const AI_SERVER_BASE_URL = 'https://93f9ebe060fd.ngrok-free.app'
+export const AI_SERVER_BASE_URL = 'https://8dbc12533f9f.ngrok-free.app'
 
 export class AIService {
   private static instance: AIService
