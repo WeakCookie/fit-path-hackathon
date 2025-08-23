@@ -1,0 +1,53 @@
+{
+    "paper_id": 1,
+    "daily_suggestions": {
+      "date": "2025-08-24",
+      "claims": [
+        {
+          "type": "exercise",
+          "modified_value": "Easy Recovery Run",
+          "reasoning": "After a high-intensity long run with notable aerobic decoupling, an easy recovery run is advisable to promote recovery and prevent excessive aerobic system stress.",
+          "reference": "When sleep duration is less than 5 hours, participants can only perform at 70% of their normal training weight"
+        },
+        {
+          "type": "intensity",
+          "modified_value": "RPE 5",
+          "reasoning": "Reducing intensity to RPE 5 allows for active recovery and addresses fatigue markers such as elevated aerobic decoupling, supporting performance stability and injury prevention.",
+          "reference": "When sleep duration is less than 5 hours, participants can only perform at 70% of their normal training weight"
+        },
+        {
+          "type": "duration",
+          "modified_value": 1800,
+          "reasoning": "Shortening duration (e.g., 30 minutes) after an intense effort supports optimal recovery and avoids cumulative fatigue, in line with evidence that capacity is reduced after poor sleep or high fatigue markers.",
+          "reference": "Sleep duration under 5 hours reduces training capacity to 70% of normal performance levels"
+        },
+        {
+          "type": "rest_time",
+          "modified_value": 120,
+          "reasoning": "If the session includes intervals or sets, extend rest to 2 minutes to ensure full recovery between efforts as supported by research when there are recovery challenges.",
+          "reference": "When sleep duration is less than 5 hours, extending rest periods to 2 minutes between sets allows full recovery of maximum strength for subsequent sets"
+        }
+      ]
+    },
+    "daily_predictions": {
+      "date": "2025-08-24",
+      "predictions": [
+        {
+          "type": "exercise",
+          "prediction": "Based on your training patterns showing consistent recovery-focused days following high-intensity long runs, I predict you will likely do an Easy Recovery Run tomorrow. You tend to favor active recovery over complete rest when there are no signs of injury and performance is up."
+        },
+        {
+          "type": "intensity",
+          "prediction": "Given that you typically reduce intensity after a hard session, tomorrow you will probably opt for a lower intensity, likely around RPE 5, to facilitate recovery while still maintaining your training rhythm."
+        },
+        {
+          "type": "duration",
+          "prediction": "Looking at your recent history, after intense long runs, you usually train about 30–40 minutes the next day. I forecast your session will last approximately 1800 to 2100 seconds (30–35 minutes)."
+        },
+        {
+          "type": "rest_time",
+          "prediction": "Because you rarely do interval-based sessions after long runs, rest intervals are generally minimal or incidental between easy running blocks. You will likely take short, active rest periods if you incorporate any, perhaps 60–90 seconds scattered between stretches or drills."
+        }
+      ]
+    }
+  }
