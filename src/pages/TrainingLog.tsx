@@ -200,8 +200,7 @@ export default function TrainingLog() {
                 onClick={() => toggleRowExpansion(field)}
                 className="flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
               >
-                <Brain className="h-3.5 w-3.5" />
-                Show Predictions
+                Predictions
                 <ChevronDown className="h-3 w-3" />
               </Button>
             )}

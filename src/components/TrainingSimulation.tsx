@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, TrendingUp, Minus, TrendingDown, Heart, Moon, Frown, Play } from "lucide-react"
 import { calculateTrainingLogError, runSimulation, WEIGHT_PRESETS } from "@/utils/performanceSimulation"
-import { TRAINING_DATA, CONFIDENCE_DATA } from "@/utils"
+import { TRAINING_DATA, CONFIDENCE_DATA, RECOVERY_DATA, runRecoverySimulation } from "@/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { TODAY } from "@/utils"
 
@@ -20,7 +20,7 @@ export enum InjurySimulationId {
 
 export enum RecoverySimulationId {
   SLEEP_UNDER_6 = "sleep-under-6",
-  SORE_LEGS = "sore-legs"
+  SORE_LEGS = "legs"
 }
 
 interface TrainingSimulationOptions {
@@ -108,10 +108,20 @@ export function TrainingSimulation() {
     // Get current global training data and run simulation
     const currentData = TRAINING_DATA.getData()
     const updatedData = runSimulation(currentData, selectedTraining as TrainingSimulationId, 0.1, true)
-    console.log("Updated data after simulation:", updatedData)
+    console.log("Updated training data after simulation:", updatedData)
     
     // Update the global training data store
     TRAINING_DATA.setData(updatedData)
+    
+    // Always run recovery simulation to create a new data point
+    const currentRecoveryData = RECOVERY_DATA.getData()
+    const injuryArray = Array.from(selectedInjuries) as any[]
+    const recoveryArray = Array.from(selectedRecoveries) as any[]
+    const updatedRecoveryData = runRecoverySimulation(currentRecoveryData, injuryArray, recoveryArray)
+    console.log("Updated recovery data after simulation:", updatedRecoveryData)
+    
+    // Update the global recovery data store
+    RECOVERY_DATA.setData(updatedRecoveryData)
     
 		const mockPredictedValueData = [{
 			date: "2025-08-22",
@@ -157,10 +167,10 @@ export function TrainingSimulation() {
 
 
     TODAY.advanceDay()
-    
+
     toast({
       title: "Simulation Complete",
-      description: `Training simulation (${selectedOptions.training?.replace('-', ' ')}) has been run successfully. TODAY advanced to ${TODAY.getISOString()}. Check training History and Research Confidence for results.`,
+      description: `Training simulation (${selectedOptions.training?.replace('-', ' ')}) has been run successfully. TODAY advanced to ${TODAY.getISOString()}. Check Training History and Recovery for results.`,
     })
     
     // Reset selections for next simulation

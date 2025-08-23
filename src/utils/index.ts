@@ -1,10 +1,15 @@
 export { runSimulation } from './performanceSimulation';
-export { TrainingSimulationId } from '@/components/TrainingSimulation';
+export { TrainingSimulationId, InjurySimulationId, RecoverySimulationId } from '@/components/TrainingSimulation';
+import { InjurySimulationId, RecoverySimulationId } from '@/components/TrainingSimulation';
 import { useState, useEffect } from 'react';
 
 // Import and re-export training data as TRAINING_DATA
 import trainingData from '@/mock/training.mock';
 import { IDailyTrainingLog } from "@/types/daily.schema";
+
+// Import recovery data and types
+import recoveryData from '@/mock/recovery.mock';
+import { IRecovery } from "@/types/recovery.schema";
 
 // Interface for confidence score data
 export interface IResearchPaperConfidenceScore {
@@ -37,6 +42,175 @@ export const TRAINING_DATA = {
     globalTrainingData = [...trainingData];
   }
 };
+
+// ------------------------------------------------------------
+
+// Global recovery data store that can be modified throughout the application
+let globalRecoveryData: IRecovery[] = [...recoveryData];
+
+export const RECOVERY_DATA = {
+  // Get current global recovery data (always sorted chronologically)
+  getData: (): IRecovery[] => {
+    return [...globalRecoveryData].sort((a, b) => a.date.localeCompare(b.date));
+  },
+  
+  // Set new recovery data
+  setData: (data: IRecovery[]): void => {
+    globalRecoveryData = [...data].sort((a, b) => a.date.localeCompare(b.date));
+  },
+  
+  // Add new recovery data entry
+  addData: (data: IRecovery): void => {
+    globalRecoveryData = [...globalRecoveryData, data].sort((a, b) => a.date.localeCompare(b.date));
+  },
+  
+  // Update existing recovery data entry by date
+  updateData: (date: string, updatedData: Partial<IRecovery>): void => {
+    const index = globalRecoveryData.findIndex(entry => entry.date === date);
+    if (index !== -1) {
+      globalRecoveryData[index] = { ...globalRecoveryData[index], ...updatedData };
+    } else {
+      // If entry doesn't exist, add it
+      globalRecoveryData.push({ date, ...updatedData } as IRecovery);
+    }
+    globalRecoveryData.sort((a, b) => a.date.localeCompare(b.date));
+  },
+  
+  // Get recovery data for a specific date
+  getDataByDate: (date: string): IRecovery | undefined => {
+    return globalRecoveryData.find(entry => entry.date === date);
+  },
+  
+  // Reset to original mock data
+  reset: (): void => {
+    globalRecoveryData = [...recoveryData];
+  }
+};
+
+/**
+ * Runs recovery simulation based on injury and recovery selections
+ * @param recoveryData - Current recovery data array
+ * @param injuries - Array of selected injury simulation IDs
+ * @param recoveries - Array of selected recovery simulation IDs
+ * @returns Updated recovery data array with new simulated entry
+ */
+export function runRecoverySimulation(
+  recoveryData: IRecovery[],
+  injuries: InjurySimulationId[],
+  recoveries: RecoverySimulationId[]
+): IRecovery[] {
+  if (recoveryData.length === 0) {
+    return recoveryData;
+  }
+
+  // Get the most recent recovery entry
+  const sortedData = [...recoveryData].sort((a, b) => a.date.localeCompare(b.date));
+  const lastEntry = sortedData[sortedData.length - 1];
+  
+  // Create new simulated recovery entry
+  const simulatedEntry = simulateRecoveryData(lastEntry, injuries, recoveries);
+  
+  // Return new array with simulated data appended
+  return [...recoveryData, simulatedEntry];
+}
+
+/**
+ * Internal function to simulate recovery data based on injuries and recovery factors
+ */
+function simulateRecoveryData(
+  data: IRecovery,
+  injuries: InjurySimulationId[],
+  recoveries: RecoverySimulationId[]
+): IRecovery {
+  const updated: IRecovery = { ...data };
+  
+  // Set the date to TODAY's value for the new simulated data
+  updated.date = TODAY.getISOString();
+  updated.source = "Simulation";
+  
+  // Handle injuries - if no injuries selected, clear the array
+  const newInjuries: string[] = injuries.length > 0 ? [...(updated.injury || [])] : [];
+  injuries.forEach(injury => {
+    switch (injury) {
+      case InjurySimulationId.KNEE_HURT:
+        if (!newInjuries.includes(InjurySimulationId.KNEE_HURT)) {
+          newInjuries.push(InjurySimulationId.KNEE_HURT);
+        }
+        break;
+      case InjurySimulationId.BREAK_ANKLE:
+        if (!newInjuries.includes(InjurySimulationId.BREAK_ANKLE)) {
+          newInjuries.push(InjurySimulationId.BREAK_ANKLE);
+        }
+        break;
+    }
+  });
+  updated.injury = newInjuries;
+  
+  // Handle recovery factors
+  recoveries.forEach(recovery => {
+    switch (recovery) {
+      case RecoverySimulationId.SLEEP_UNDER_6:
+        // Take current sleep duration, ensure it's under 6, then vary by 5%
+        const currentSleep = updated.sleepDuration || 7.5; // Default if not set
+        const baseSleep = Math.min(currentSleep, 5.9); // Ensure under 6 hours
+        const variation = baseSleep * 0.05; // 5% variation
+        updated.sleepDuration = baseSleep + (Math.random() - 0.5) * 2 * variation;
+        // Ensure it stays positive and under 6
+        updated.sleepDuration = Math.max(0.5, Math.min(updated.sleepDuration, 5.99));
+        break;
+        
+      case RecoverySimulationId.SORE_LEGS:
+        const newSoreness = [...(updated.soreness || [])];
+        if (!newSoreness.includes(RecoverySimulationId.SORE_LEGS)) {
+          newSoreness.push(RecoverySimulationId.SORE_LEGS);
+        }
+        updated.soreness = newSoreness;
+        break;
+    }
+  });
+  
+  // If no recovery factors that affect soreness are selected, clear soreness
+  const hasSorenessFactors = recoveries.includes(RecoverySimulationId.SORE_LEGS);
+  if (!hasSorenessFactors) {
+    updated.soreness = [];
+  }
+  
+  // Simulate other recovery metrics with realistic variation
+  if (updated.RHR !== undefined) {
+    // Increase RHR slightly if there are injuries or poor sleep, otherwise small natural variation
+    const stressFactor = (injuries.length * 2) + (recoveries.includes(RecoverySimulationId.SLEEP_UNDER_6) ? 3 : 0);
+    const baseVariation = (Math.random() - 0.5) * 3; // ±1.5 natural variation
+    updated.RHR = Math.round(updated.RHR + stressFactor + baseVariation);
+    updated.RHR = Math.max(40, Math.min(100, updated.RHR)); // Keep within realistic bounds
+  }
+  
+  if (updated.HRV !== undefined) {
+    // Decrease HRV with stress factors, otherwise small natural variation
+    const stressFactor = (injuries.length * 5) + (recoveries.includes(RecoverySimulationId.SLEEP_UNDER_6) ? 8 : 0);
+    const baseVariation = (Math.random() - 0.5) * 5; // ±2.5 natural variation
+    updated.HRV = Math.round(updated.HRV - stressFactor + baseVariation);
+    updated.HRV = Math.max(20, Math.min(100, updated.HRV)); // Keep within realistic bounds
+  }
+  
+  if (updated.fatigue !== undefined) {
+    // Increase fatigue with stress factors, otherwise small natural variation
+    const stressFactor = (injuries.length * 1.5) + (recoveries.includes(RecoverySimulationId.SLEEP_UNDER_6) ? 2 : 0);
+    const baseVariation = (Math.random() - 0.5) * 1.5; // ±0.75 natural variation
+    updated.fatigue = Math.round(updated.fatigue + stressFactor + baseVariation);
+    updated.fatigue = Math.min(10, Math.max(1, updated.fatigue)); // Keep within 1-10 scale
+  }
+  
+  // Add small natural variation to sleep duration if no sleep factor was applied
+  if (updated.sleepDuration !== undefined && !recoveries.includes(RecoverySimulationId.SLEEP_UNDER_6)) {
+    const sleepVariation = (Math.random() - 0.5) * 0.6; // ±0.3 hours natural variation
+    updated.sleepDuration = Math.round((updated.sleepDuration + sleepVariation) * 10) / 10; // Round to 1 decimal
+    updated.sleepDuration = Math.max(3, Math.min(12, updated.sleepDuration)); // Keep realistic bounds
+  }
+  
+  return updated;
+}
+
+// ------------------------------------------------------------
 
 // Initial confidence data (can be empty or contain some starting values)
 let globalConfidenceData: IResearchPaperConfidenceScore[] = [
@@ -109,6 +283,8 @@ export function calculateConfidenceScore(
   // Ensure confidence is between 0.1 and 1.0
   return Math.max(0.1, Math.min(1.0, confidence));
 }
+
+// ------------------------------------------------------------
 
 // Global TODAY value that can be modified throughout the application
 let globalToday = new Date();

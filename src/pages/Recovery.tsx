@@ -4,9 +4,7 @@ import { DateTimeline } from "@/components/recovery/DateTimeline"
 import { ChatInterface } from "@/components/recovery/ChatInterface"
 import { ReadinessSection } from "@/components/recovery/ReadinessSection"
 import { DetailsSection } from "@/components/recovery/DetailsSection"
-import recoveryData from "@/mock/recovery.mock"
-import { IRecovery } from "@/types/recovery.schema"
-import { useToday } from "@/utils"
+import { useToday, RECOVERY_DATA } from "@/utils"
 
 export default function Recovery() {
   const today = useToday()
@@ -14,6 +12,7 @@ export default function Recovery() {
     today.isoString
   )
   
+  const recoveryData = RECOVERY_DATA.getData()
   const selectedDayData = recoveryData.find(data => data.date === selectedDate)
   const isToday = selectedDate === today.isoString
 
