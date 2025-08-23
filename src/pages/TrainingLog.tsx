@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -115,12 +115,34 @@ export default function TrainingLog() {
   
   const [selectedAI, setSelectedAI] = useState<AIItem | null>(null)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [currentAIData, setCurrentAIData] = useState<Record<string, AIItem[]>>(mockAIData)
   
   // Get the latest training data from global store (most recent entry)
   const allTrainingData = TRAINING_DATA.getData()
   const latestTrainingData = allTrainingData.length > 0 
     ? [...allTrainingData].sort((a, b) => b.date.localeCompare(a.date))[0] 
     : null
+
+  // Check for updated AI data from simulation
+  useEffect(() => {
+    const checkForAIData = () => {
+      const latestAIData = (window as any).latestAIData
+      if (latestAIData) {
+        console.log("Loading AI data from simulation:", latestAIData)
+        setCurrentAIData(latestAIData)
+        // Clear the global data after loading
+        delete (window as any).latestAIData
+      }
+    }
+    
+    // Check immediately
+    checkForAIData()
+    
+    // Check periodically for new AI data
+    const interval = setInterval(checkForAIData, 1000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   const handleInputChange = (field: keyof TrainingEntry, value: string) => {
     setEntry(prev => ({ ...prev, [field]: value }))
@@ -154,7 +176,7 @@ export default function TrainingLog() {
   }
 
   const renderTrainingRow = (field: keyof TrainingEntry, label: string, placeholder: string) => {
-    const aiItems = mockAIData[field] || []
+    const aiItems = currentAIData[field] || []
     const predictions = aiItems.filter(item => item.type === "prediction")
     const suggestions = aiItems.filter(item => item.type === "suggestion")
     const isExpanded = expandedRows.has(field)
@@ -252,6 +274,12 @@ export default function TrainingLog() {
             </div>
             <p className="text-muted-foreground">
               Track your workout with AI-powered insights and recommendations
+              {currentAIData !== mockAIData && (
+                <span className="ml-2 inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  Live AI Data Active
+                </span>
+              )}
             </p>
           </div>
 

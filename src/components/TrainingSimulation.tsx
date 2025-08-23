@@ -1,11 +1,14 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, TrendingUp, Minus, TrendingDown, Heart, Moon, Frown, Play } from "lucide-react"
-import { calculateTrainingLogError, runSimulation, WEIGHT_PRESETS } from "@/utils/performanceSimulation"
-import { TRAINING_DATA, CONFIDENCE_DATA } from "@/utils"
+import { Activity, TrendingUp, Minus, TrendingDown, Heart, Moon, Frown, Play, Loader2 } from "lucide-react"
+import { runSimulation } from "@/utils/performanceSimulation"
+import { TRAINING_DATA } from "@/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { TODAY } from "@/utils"
+import { aiService } from "@/services/ai.service"
+
+import { IDailyTrainingLog } from "@/types/daily.schema"
 
 export enum TrainingSimulationId {
   PERFORMANCE_UP = "performance-up",
@@ -68,6 +71,7 @@ export function TrainingSimulation() {
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null)
   const [selectedInjuries, setSelectedInjuries] = useState<Set<string>>(new Set())
   const [selectedRecoveries, setSelectedRecoveries] = useState<Set<string>>(new Set())
+  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
   const handleTrainingClick = (training: string) => {
@@ -98,75 +102,91 @@ export function TrainingSimulation() {
     })
   }
 
-  const handleSubmit = () => {
-    const selectedOptions: TrainingSimulationOptions = {
-      training: selectedTraining,
-      injuries: Array.from(selectedInjuries),
-      recoveries: Array.from(selectedRecoveries)
+  const handleSubmit = async () => {
+    if (!selectedTraining) return
+
+    setIsLoading(true)
+
+    try {
+      const selectedOptions: TrainingSimulationOptions = {
+        training: selectedTraining,
+        injuries: Array.from(selectedInjuries),
+        recoveries: Array.from(selectedRecoveries)
+      }
+      
+      // Get current global training data and run simulation
+      const currentData = TRAINING_DATA.getData()
+      const updatedData = runSimulation(currentData, selectedTraining as TrainingSimulationId, 0.1, true)
+      
+      // Update the global training data store
+      TRAINING_DATA.setData(updatedData)
+
+      // Get the latest training data for AI request
+      const latestTraining = updatedData.length > 0 
+        ? [...updatedData].sort((a, b) => b.date.localeCompare(a.date))[0] 
+        : undefined
+
+      // Get AI suggestions and predictions
+      try {
+        const aiResponse = await aiService.getDailyTrainingSuggestion(
+          selectedTraining,
+          Array.from(selectedInjuries),
+          Array.from(selectedRecoveries),
+          latestTraining
+        )
+
+        console.log("AI Response:", aiResponse);
+
+        // AI response processed successfully
+
+        // Store AI data globally for TrainingLog to access
+        (window as any).latestAIData = aiResponse
+
+        toast({
+          title: "AI Simulation Complete",
+          description: `Training simulation with AI recommendations completed successfully. TODAY advanced to ${TODAY.getISOString()}. Check training Log for AI suggestions and predictions.`,
+        })
+
+      } catch (aiError) {
+        console.error("AI service error:", aiError)
+        
+        // Fallback to mock data if AI service fails
+        const mockPredictedValueData = [{
+          date: "2025-08-22",
+          pace: 300,
+          distance: 8,
+          duration: 45 * 60,
+          cadence: 168,
+          lactaseThresholdPace: 270,
+          aerobicDecoupling: 9.8,
+          paperId: "fallback-1"
+        }]
+        
+        // Fallback data processed
+
+        toast({
+          title: "Simulation Complete (Fallback)",
+          description: `Training simulation completed with fallback data. AI service is currently unavailable. TODAY advanced to ${TODAY.getISOString()}.`,
+          variant: "destructive"
+        })
+      }
+
+      TODAY.advanceDay()
+      
+    } catch (error) {
+      console.error("Simulation error:", error)
+      toast({
+        title: "Simulation Failed",
+        description: "An error occurred during the training simulation. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+      // Reset selections for next simulation
+      setSelectedTraining(null)
+      setSelectedInjuries(new Set())
+      setSelectedRecoveries(new Set())
     }
-    
-    // Get current global training data and run simulation
-    const currentData = TRAINING_DATA.getData()
-    const updatedData = runSimulation(currentData, selectedTraining as TrainingSimulationId, 0.1, true)
-    console.log("Updated data after simulation:", updatedData)
-    
-    // Update the global training data store
-    TRAINING_DATA.setData(updatedData)
-    
-		const mockPredictedValueData = [{
-			date: "2025-08-22",
-			pace: 300,
-			distance: 8,
-			duration: 45 * 60,
-			cadence: 168,
-			lactaseThresholdPace: 270,
-			aerobicDecoupling: 9.8,
-			paperId: "3"
-		}, {
-			date: "2025-08-22",
-			pace: 200,
-			distance: 8,
-			duration: 43 * 60,
-			cadence: 168,
-			lactaseThresholdPace: 270,
-			aerobicDecoupling: 9.8,
-			paperId: "4"
-		}]
-		
-		// Process each predicted value data entry
-		mockPredictedValueData.forEach(predictedData => {
-			// Calculate confidence score for this prediction
-			const calculatedScore = calculateTrainingLogError(updatedData[updatedData.length - 1], predictedData, WEIGHT_PRESETS.enduranceFocused)
-			
-			// Get the latest confidence score for this paper
-			const latestScore = CONFIDENCE_DATA.getLatestScore(predictedData.paperId)
-			
-			// Add the calculated score to the latest value (or start with 0 if no previous data)
-			const baseScore = latestScore ? latestScore.score : 0
-			const newScore = baseScore + calculatedScore
-			
-			// Create and add new confidence data point
-			const newConfidencePoint = {
-				date: TODAY.getISOString(),
-				score: newScore,
-				paperId: predictedData.paperId
-			}
-			
-			CONFIDENCE_DATA.addScore(newConfidencePoint)
-		})
-
-
-    TODAY.advanceDay()
-    
-    toast({
-      title: "Simulation Complete",
-      description: `Training simulation (${selectedOptions.training?.replace('-', ' ')}) has been run successfully. TODAY advanced to ${TODAY.getISOString()}. Check training History and Research Confidence for results.`,
-    })
-    
-    // Reset selections for next simulation
-    setSelectedTraining(null)
-    setSelectedInjuries(new Set())
-    setSelectedRecoveries(new Set())
   }
 
   return (
@@ -267,10 +287,19 @@ export function TrainingSimulation() {
             variant="hero" 
             className="w-full"
             onClick={handleSubmit}
-            disabled={!selectedTraining}
+            disabled={!selectedTraining || isLoading}
           >
-            <Play className="h-4 w-4 mr-2" />
-            Run Simulation
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Getting AI Recommendations...
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4 mr-2" />
+                Run AI Simulation
+              </>
+            )}
           </Button>
         </div>
       </CardContent>
