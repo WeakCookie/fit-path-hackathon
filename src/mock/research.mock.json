@@ -128,7 +128,7 @@
         },
         "dailyClaim": {
             "pace": [
-                "When sleep duration is less than 6 hours, training pace decreases by 10%.",
+                "When sleep duration is less than 6 hours, training pace slower by 10%.",
                 "Recommended to train at 90% of usual pace to optimize recovery when sleep-deprived."
             ],
             "lactateThresholdPace": [

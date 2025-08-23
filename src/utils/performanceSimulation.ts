@@ -66,7 +66,7 @@ function simulateData(
  * - Distance: increases (going further)
  * - Pace: decreases (running faster, lower seconds per km)
  * - Cadence: increases (more steps per minute)
- * - Lactate Threshold Pace: decreases (can maintain faster pace at threshold)
+ * - Lactate Threshold Pace: increases (higher threshold value with better performance)
  * - Aerobic Decoupling: decreases (better aerobic efficiency)
  * - One Minute HRR: increases (better recovery)
  * - Efficiency Factor: increases (better pace to HR ratio)
@@ -84,7 +84,7 @@ function simulateImprovement(
     distance: trainingLog.distance ? Math.round((trainingLog.distance * improvementFactor * variation()) * 100) / 100 : undefined,
     pace: trainingLog.pace ? Math.round(trainingLog.pace / (improvementFactor * variation())) : undefined,
     cadence: trainingLog.cadence ? Math.round(trainingLog.cadence * (1 + 0.05 * variation())) : undefined,
-    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace / (improvementFactor * variation())) : undefined,
+    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace * (improvementFactor * variation())) : undefined,
     aerobicDecoupling: trainingLog.aerobicDecoupling ? Math.round((trainingLog.aerobicDecoupling * (1 - 0.2 * variation())) * 10) / 10 : undefined,
     oneMinHRR: trainingLog.oneMinHRR ? Math.round(trainingLog.oneMinHRR * (1 + 0.15 * variation())) : undefined,
     efficiencyFactor: trainingLog.efficiencyFactor ? Math.round((trainingLog.efficiencyFactor * improvementFactor * variation()) * 100) / 100 : undefined,
@@ -97,7 +97,7 @@ function simulateImprovement(
  * - Distance: decreases (can't go as far)
  * - Pace: increases (running slower, more seconds per km)
  * - Cadence: decreases (fewer steps per minute)
- * - Lactate Threshold Pace: increases (threshold at slower pace)
+ * - Lactate Threshold Pace: decreases (lower threshold value with worse performance)
  * - Aerobic Decoupling: increases (worse aerobic efficiency)
  * - One Minute HRR: decreases (worse recovery)
  * - Efficiency Factor: decreases (worse pace to HR ratio)
@@ -115,7 +115,7 @@ function simulateDecline(
     distance: trainingLog.distance ? Math.round((trainingLog.distance * declineFactor * variation()) * 100) / 100 : undefined,
     pace: trainingLog.pace ? Math.round(trainingLog.pace / (declineFactor * variation())) : undefined,
     cadence: trainingLog.cadence ? Math.round(trainingLog.cadence * (1 - 0.05 * variation())) : undefined,
-    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace / (declineFactor * variation())) : undefined,
+    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace * (declineFactor * variation())) : undefined,
     aerobicDecoupling: trainingLog.aerobicDecoupling ? Math.round((trainingLog.aerobicDecoupling * (1 + 0.3 * variation())) * 10) / 10 : undefined,
     oneMinHRR: trainingLog.oneMinHRR ? Math.round(trainingLog.oneMinHRR * (1 - 0.15 * variation())) : undefined,
     efficiencyFactor: trainingLog.efficiencyFactor ? Math.round((trainingLog.efficiencyFactor * declineFactor * variation()) * 100) / 100 : undefined,
@@ -162,7 +162,7 @@ function simulateSimpleImprovement(
     distance: trainingLog.distance ? Math.round((trainingLog.distance * improvementFactor) * 100) / 100 : undefined,
     pace: trainingLog.pace ? Math.round(trainingLog.pace / improvementFactor) : undefined,
     cadence: trainingLog.cadence ? Math.round(trainingLog.cadence * improvementFactor) : undefined,
-    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace / improvementFactor) : undefined,
+    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace * improvementFactor) : undefined,
     aerobicDecoupling: trainingLog.aerobicDecoupling ? Math.round((trainingLog.aerobicDecoupling * (1 - factor)) * 10) / 10 : undefined,
     oneMinHRR: trainingLog.oneMinHRR ? Math.round(trainingLog.oneMinHRR * improvementFactor) : undefined,
     efficiencyFactor: trainingLog.efficiencyFactor ? Math.round((trainingLog.efficiencyFactor * improvementFactor) * 100) / 100 : undefined,
@@ -185,7 +185,7 @@ function simulateSimpleDecline(
     distance: trainingLog.distance ? Math.round((trainingLog.distance * declineFactor) * 100) / 100 : undefined,
     pace: trainingLog.pace ? Math.round(trainingLog.pace / declineFactor) : undefined,
     cadence: trainingLog.cadence ? Math.round(trainingLog.cadence * declineFactor) : undefined,
-    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace / declineFactor) : undefined,
+    lactaseThresholdPace: trainingLog.lactaseThresholdPace ? Math.round(trainingLog.lactaseThresholdPace * declineFactor) : undefined,
     aerobicDecoupling: trainingLog.aerobicDecoupling ? Math.round((trainingLog.aerobicDecoupling * (1 + factor)) * 10) / 10 : undefined,
     oneMinHRR: trainingLog.oneMinHRR ? Math.round(trainingLog.oneMinHRR * declineFactor) : undefined,
     efficiencyFactor: trainingLog.efficiencyFactor ? Math.round((trainingLog.efficiencyFactor * declineFactor) * 100) / 100 : undefined,

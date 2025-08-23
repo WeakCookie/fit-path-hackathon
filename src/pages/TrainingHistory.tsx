@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { DateTimeline } from "@/components/recovery/DateTimeline"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { Clock, Route, Target, Zap, TrendingUp, TrendingDown, Activity } from "lucide-react"
+import { Clock, Route, Target, Zap, TrendingUp, TrendingDown, Activity, Info } from "lucide-react"
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useToday, TRAINING_DATA } from "@/utils"
+
+const GOAL = "Endurance"
 
 // Get extended training data with additional static entries for demonstration
 const getExtendedTrainingData = () => {
@@ -68,29 +71,218 @@ const formatPace = (seconds: number) => {
 export default function TrainingHistory() {
   const today = useToday()
   const [selectedDate, setSelectedDate] = useState(today.isoString)
-  const [selectedMetric, setSelectedMetric] = useState<'pace' | 'lactaseThresholdPace' | 'aerobicDecoupling' | 'oneMinHRR' | 'efficiencyFactor'>('pace')
+  const [selectedMetric, setSelectedMetric] = useState<'duration' | 'intensity' | 'distance' | 'aerobicDecoupling' | 'pace' | 'efficiencyFactor' | 'lactaseThresholdPace' | 'oneMinHRR' | 'cadence' | 'restTime'>('duration')
 
-  // Get current training data and filter to only include dates up to TODAY
-  // This ensures charts end at TODAY and don't show future data
   const extendedTrainingData = getExtendedTrainingData()
   const filteredTrainingData = extendedTrainingData.filter(data => data.date <= today.isoString)
   
   const selectedTraining = filteredTrainingData.find(data => data.date === selectedDate)
 
-  const metricInfo = {
-    pace: { label: "Pace", unit: "min/km", better: "lower", icon: Clock },
-    lactaseThresholdPace: { label: "Lactate Threshold Pace", unit: "min/km", better: "lower", icon: Target },
-    aerobicDecoupling: { label: "Aerobic Decoupling", unit: "%", better: "lower", icon: Activity },
-    oneMinHRR: { label: "1-Min Heart Rate Recovery", unit: "bpm", better: "higher", icon: TrendingUp },
-    efficiencyFactor: { label: "Efficiency Factor", unit: "", better: "higher", icon: TrendingUp }
+  // Priority data from JSON with descriptions
+  const endurancePriority = {
+    duration: {
+      priority: 1,
+      why: "Primary driver of aerobic adaptations; more time-on-feet builds mitochondria and capillaries."
+    },
+    intensity: {
+      priority: 2,
+      why: "Keep RPE low (Zone 1–2) to stay aerobic, maximize fat oxidation, and limit drift."
+    },
+    distance: {
+      priority: 3,
+      why: "Tracks volume and complements duration for weekly load without forcing pace."
+    },
+    aerobicDecoupling: {
+      priority: 4,
+      why: "Low drift (<=5–7%) indicates strong aerobic durability at steady effort."
+    },
+    pace: {
+      priority: 5,
+      why: "Use as a guardrail; keep easy relative to LT to remain aerobic and avoid overreaching."
+    },
+    efficiencyFactor: {
+      priority: 6,
+      why: "More speed per heartbeat at easy HR; upward trend signals improving economy."
+    },
+    lactaseThresholdPace: {
+      priority: 7,
+      why: "Anchor for training zones; as LT improves, easy pace becomes faster at the same effort."
+    },
+    oneMinHRR: {
+      priority: 8,
+      why: "Faster post-exercise HR drop reflects good recovery and readiness for volume."
+    },
+    cadence: {
+      priority: 9,
+      why: "Economical turnover reduces impact and energy cost over long durations."
+    },
+    restTime: {
+      priority: 10,
+      why: "Minimal role in steady endurance; continuous work sustains aerobic stimulus."
+    }
   }
+
+  const metricInfo = {
+    duration: { label: "Duration", unit: "min", better: "higher", icon: Clock, priority: 1, description: endurancePriority.duration.why },
+    // intensity: { label: "Intensity", unit: "RPE", better: "lower", icon: Zap, priority: 2, description: endurancePriority.intensity.why },
+    distance: { label: "Distance", unit: "km", better: "higher", icon: Route, priority: 3, description: endurancePriority.distance.why },
+    aerobicDecoupling: { label: "Aerobic Decoupling", unit: "%", better: "lower", icon: Activity, priority: 4, description: endurancePriority.aerobicDecoupling.why },
+    pace: { label: "Pace", unit: "min/km", better: "lower", icon: Clock, priority: 5, description: endurancePriority.pace.why },
+    efficiencyFactor: { label: "Efficiency Factor", unit: "", better: "higher", icon: TrendingUp, priority: 6, description: endurancePriority.efficiencyFactor.why },
+    lactaseThresholdPace: { label: "Lactate Threshold Pace", unit: "min/km", better: "higher", icon: TrendingUp, priority: 7, description: endurancePriority.lactaseThresholdPace.why },
+    oneMinHRR: { label: "1-Min Heart Rate Recovery", unit: "bpm", better: "higher", icon: TrendingUp, priority: 8, description: endurancePriority.oneMinHRR.why },
+    cadence: { label: "Cadence", unit: "spm", better: "higher", icon: Activity, priority: 9, description: endurancePriority.cadence.why },
+    restTime: { label: "Rest Time", unit: "min", better: "lower", icon: Clock, priority: 10, description: endurancePriority.restTime.why }
+  }
+
+  // Summary configuration object
+  const summaryConfig = [
+    // Exercise - Special case, not in priority order
+    {
+      key: 'exercise',
+      label: 'Exercise',
+      icon: Target,
+      getValue: (training: any) => training.exercise,
+      formatValue: (value: any) => value,
+      showTooltip: false
+    },
+    // Priority-based metrics
+    {
+      key: 'duration',
+      label: 'Duration',
+      icon: Clock,
+      getValue: (training: any) => training.duration,
+      formatValue: (value: number) => formatTime(value),
+      showTooltip: true,
+      priority: 1
+    },
+    {
+      key: 'intensity',
+      label: 'Intensity',
+      icon: Zap,
+      getValue: (training: any) => training.intensity,
+      formatValue: (value: number) => `${value} RPE`,
+      showTooltip: true,
+      priority: 2
+    },
+    {
+      key: 'distance',
+      label: 'Distance',
+      icon: Route,
+      getValue: (training: any) => training.distance,
+      formatValue: (value: number) => `${value} km`,
+      showTooltip: true,
+      priority: 3
+    },
+    {
+      key: 'aerobicDecoupling',
+      label: 'Aerobic Decoupling',
+      icon: Activity,
+      getValue: (training: any) => training.aerobicDecoupling,
+      formatValue: (value: number) => `${value}%`,
+      showTooltip: true,
+      priority: 4
+    },
+    {
+      key: 'pace',
+      label: 'Average Pace',
+      icon: Clock,
+      getValue: (training: any) => training.pace,
+      formatValue: (value: number) => `${formatPace(value)} /km`,
+      showTooltip: true,
+      priority: 5
+    },
+    {
+      key: 'efficiencyFactor',
+      label: 'Efficiency Factor',
+      icon: TrendingUp,
+      getValue: (training: any) => training.efficiencyFactor,
+      formatValue: (value: number) => value.toString(),
+      showTooltip: true,
+      priority: 6
+    },
+    {
+      key: 'lactaseThresholdPace',
+      label: 'LT Pace',
+      icon: TrendingUp,
+      getValue: (training: any) => training.lactaseThresholdPace,
+      formatValue: (value: number) => `${formatPace(value)} /km`,
+      showTooltip: true,
+      priority: 7
+    },
+    {
+      key: 'oneMinHRR',
+      label: 'HRR (1 min)',
+      icon: TrendingUp,
+      getValue: (training: any) => training.oneMinHRR,
+      formatValue: (value: number) => `${value} bpm`,
+      showTooltip: true,
+      priority: 8
+    },
+    {
+      key: 'cadence',
+      label: 'Cadence',
+      icon: Activity,
+      getValue: (training: any) => training.cadence,
+      formatValue: (value: number) => `${value} spm`,
+      showTooltip: true,
+      priority: 9
+    }
+  ]
 
   const chartData = filteredTrainingData.map(data => ({
     date: data.date,
-    value: selectedMetric === 'pace' || selectedMetric === 'lactaseThresholdPace' 
-      ? data[selectedMetric] / 60 // Convert to minutes
-      : data[selectedMetric]
+    value: (() => {
+      switch (selectedMetric) {
+        case 'pace':
+        case 'lactaseThresholdPace':
+          return data[selectedMetric] / 60 // Convert to minutes
+        case 'duration':
+          return data[selectedMetric] / 60 // Convert to minutes
+        case 'restTime':
+          return data.restTime || 0 // Default to 0 if not available
+        default:
+          return data[selectedMetric]
+      }
+    })()
   }))
+
+  // Summary Card Component
+  const SummaryCard = ({ 
+    config, 
+    training 
+  }: { 
+    config: typeof summaryConfig[0], 
+    training: any 
+  }) => {
+    const IconComponent = config.icon
+    const value = config.getValue(training)
+    const formattedValue = config.formatValue(value)
+    
+    return (
+      <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
+        <IconComponent className="h-5 w-5 text-fitness-orange" />
+        <div className="flex-1">
+          {config.showTooltip ? (
+            <div className="flex items-center gap-1">
+              <p className="text-sm text-muted-foreground">{config.label}</p>
+              <UITooltip>
+                <TooltipTrigger>
+                  <Info className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">{metricInfo[config.key as keyof typeof metricInfo]?.description}</p>
+                </TooltipContent>
+              </UITooltip>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">{config.label}</p>
+          )}
+          <p className="font-semibold">{formattedValue}</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -129,64 +321,17 @@ export default function TrainingHistory() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
-                      <Target className="h-5 w-5 text-fitness-orange" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Exercise</p>
-                        <p className="font-semibold">{selectedTraining.exercise}</p>
-                      </div>
+                  <TooltipProvider>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {summaryConfig.map((config) => (
+                        <SummaryCard 
+                          key={config.key}
+                          config={config}
+                          training={selectedTraining}
+                        />
+                      ))}
                     </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
-                      <Zap className="h-5 w-5 text-fitness-orange" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Intensity</p>
-                        <p className="font-semibold">{selectedTraining.intensity} RPE</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
-                      <Clock className="h-5 w-5 text-fitness-orange" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Duration</p>
-                        <p className="font-semibold">{formatTime(selectedTraining.duration)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
-                      <Route className="h-5 w-5 text-fitness-orange" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Distance</p>
-                        <p className="font-semibold">{selectedTraining.distance} km</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
-                      <Clock className="h-5 w-5 text-fitness-orange" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Average Pace</p>
-                        <p className="font-semibold">{formatPace(selectedTraining.pace)} /km</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
-                      <Activity className="h-5 w-5 text-fitness-orange" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Cadence</p>
-                        <p className="font-semibold">{selectedTraining.cadence} spm</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
-                      <TrendingUp className="h-5 w-5 text-fitness-orange" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">HRR (1 min)</p>
-                        <p className="font-semibold">{selectedTraining.oneMinHRR} bpm</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-4 bg-card rounded-lg border">
-                      <Target className="h-5 w-5 text-fitness-orange" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Efficiency Factor</p>
-                        <p className="font-semibold">{selectedTraining.efficiencyFactor}</p>
-                      </div>
-                    </div>
-                  </div>
+                  </TooltipProvider>
                 </CardContent>
               </Card>
             )}
@@ -202,27 +347,31 @@ export default function TrainingHistory() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {Object.entries(metricInfo).map(([key, info]) => {
-                    const IconComponent = info.icon
-                    return (
-                      <Button
-                        key={key}
-                        variant={selectedMetric === key ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedMetric(key as any)}
-                        className="flex items-center gap-2"
-                      >
-                        <IconComponent className="h-3.5 w-3.5" />
-                        {info.label}
-                        {info.better === "lower" ? (
-                          <TrendingDown className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <TrendingUp className="h-3 w-3 text-green-500" />
-                        )}
-                      </Button>
-                    )
-                  })}
+                <div className="mb-6 overflow-x-auto">
+                  <div className="flex gap-2 min-w-max pb-2">
+                    {Object.entries(metricInfo)
+                      .sort(([, a], [, b]) => a.priority - b.priority)
+                      .map(([key, info]) => {
+                        const IconComponent = info.icon
+                        return (
+                          <Button
+                            key={key}
+                            variant={selectedMetric === key ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedMetric(key as any)}
+                            className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                          >
+                            <IconComponent className="h-3.5 w-3.5" />
+                            {info.label}
+                            {info.better === "lower" ? (
+                              <TrendingDown className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <TrendingUp className="h-3 w-3 text-green-500" />
+                            )}
+                          </Button>
+                        )
+                      })}
+                  </div>
                 </div>
 
                 <div className="h-80">
@@ -251,9 +400,19 @@ export default function TrainingHistory() {
                           borderRadius: '8px'
                         }}
                         formatter={(value: number) => [
-                          selectedMetric === 'pace' || selectedMetric === 'lactaseThresholdPace' 
-                            ? formatPace(value * 60)
-                            : value.toFixed(2),
+                          (() => {
+                            switch (selectedMetric) {
+                              case 'pace':
+                              case 'lactaseThresholdPace':
+                                return formatPace(value * 60)
+                              case 'duration':
+                                return formatTime(value * 60)
+                              case 'restTime':
+                                return `${value.toFixed(1)} min`
+                              default:
+                                return value.toFixed(2)
+                            }
+                          })(),
                           metricInfo[selectedMetric].label
                         ]}
                       />
@@ -269,10 +428,17 @@ export default function TrainingHistory() {
                   </ResponsiveContainer>
                 </div>
 
-                <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold">Tip:</span> {metricInfo[selectedMetric].better === "lower" ? "Lower" : "Higher"} values indicate better performance for {metricInfo[selectedMetric].label.toLowerCase()}.
-                  </p>
+                <div className="mt-4 space-y-3">
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-semibold">Why this matters for {GOAL}:</span> {metricInfo[selectedMetric].description}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-semibold">Tip:</span> {metricInfo[selectedMetric].better === "lower" ? "Lower" : "Higher"} values indicate better performance for {metricInfo[selectedMetric].label.toLowerCase()}.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
