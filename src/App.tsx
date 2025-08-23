@@ -9,6 +9,7 @@ import TrainingHistory from "./pages/TrainingHistory";
 import ResearchConfidence from "./pages/ResearchConfidence";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import Recovery from "./pages/Recovery";
+import Program from "./pages/Program";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/research-confidence" element={<ResearchConfidence />} />
           <Route path="/knowledge-base" element={<KnowledgeBase />} />
           <Route path="/recovery" element={<Recovery />} />
+          <Route path="/program" element={<Program />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
