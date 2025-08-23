@@ -1,238 +1,439 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer"
+import { ErrorBoundary } from "@/components/ui/error-boundary"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Send, MessageCircle, ChevronDown, ChevronUp } from "lucide-react"
-import { InjurySimulationId, RecoverySimulationId } from "@/components/TrainingSimulation"
-import { RECOVERY_DATA, TRAINING_DATA } from "@/utils"
+import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Send, MessageCircle, Activity, Clock, Heart, Zap, Plus, X, Sparkles } from "lucide-react"
 
 interface ChatInterfaceProps {
   selectedDate: string
+  simulatedData?: {
+    sleepDuration?: number
+    RHR?: number
+    HRV?: number
+    soreness?: string[]
+    fatigue?: number
+    source?: string
+    injury?: string[]
+  } | null
+  autoOpenForm?: boolean
 }
 
-interface SuggestedQuestion {
-  id: string
-  title: string
-  expandedMessage: string
-  isGeneral?: boolean
+interface DailyRecoveryData {
+  date: string
+  sleepDuration: number
+  RHR: number
+  HRV: number
+  soreness: string[]
+  fatigue: number
+  source: string
+  injury: string[]
 }
 
-const generalQuestions: SuggestedQuestion[] = [
-  {
-    id: "general-1",
-    title: "Do you feel tired or sore today?",
-    expandedMessage: "Tell us about your overall energy levels and any muscle soreness you're experiencing today.",
-    isGeneral: true
-  },
-  {
-    id: "general-2", 
-    title: "How's your sleep last night?",
-    expandedMessage: "Share details about your sleep quality, duration, and how rested you feel this morning.",
-    isGeneral: true
-  },
-  {
-    id: "general-3",
-    title: "How's your energy level today?",
-    expandedMessage: "Rate your energy on a scale of 1-10 and describe how you're feeling mentally and physically.",
-    isGeneral: true
+interface DailyRecoveryResponse {
+  date: string
+  recovery_score: number
+  sleep_quality: string
+  hrv_status: string
+  fatigue_level: string
+  ai_analysis: string
+  recommendations: string[]
+  metrics: {
+    sleep_duration: number
+    rhr: number
+    hrv: number
+    fatigue: number
+    soreness_count: number
+    injury_count: number
   }
+}
+
+const commonSorenessAreas = [
+  "Lower back", "Upper back", "Shoulders", "Neck", "Quads", "Hamstrings", 
+  "Calves", "Glutes", "Arms", "Chest", "Core", "Knees", "Ankles", "Wrists"
 ]
 
-const injurySpecificQuestions: Record<InjurySimulationId, SuggestedQuestion> = {
-  [InjurySimulationId.KNEE_HURT]: {
-    id: "injury-knee",
-    title: "How's your knee today?",
-    expandedMessage: "How's your knee feeling compared to yesterday? Any changes in pain level, swelling, or mobility? Rate the pain from 1-10 and describe what movements are difficult."
-  },
-  [InjurySimulationId.BREAK_ANKLE]: {
-    id: "injury-ankle",
-    title: "How's your ankle recovery going?",
-    expandedMessage: "How's your ankle healing compared to yesterday? Any changes in pain, swelling, or your ability to bear weight? Describe your mobility and comfort level."
-  }
-}
-
-const recoverySpecificQuestions: Record<RecoverySimulationId, SuggestedQuestion> = {
-  [RecoverySimulationId.SLEEP_UNDER_6]: {
-    id: "recovery-sleep",
-    title: "How did your short sleep affect you?",
-    expandedMessage: "How are you feeling after getting less than 6 hours of sleep? Are you experiencing fatigue, difficulty concentrating, or any other effects from insufficient rest?"
-  },
-  [RecoverySimulationId.SORE_LEGS]: {
-    id: "recovery-legs",
-    title: "How are your legs feeling today?",
-    expandedMessage: "How's the soreness in your legs compared to yesterday? Has it improved, stayed the same, or gotten worse? What activities are most affected by the soreness?"
-  }
-}
-
-const mockLogs = [
-  "Yesterday: You mentioned feeling tired after the workout",
-  "2 days ago: You said your knee today is not very well",
-  "3 days ago: Reported good sleep quality and high energy"
+const commonInjuries = [
+  "Knee pain", "Lower back strain", "Shoulder impingement", "Ankle sprain",
+  "Hamstring strain", "Tennis elbow", "Wrist pain", "Neck stiffness"
 ]
 
-export function ChatInterface({ selectedDate }: ChatInterfaceProps) {
-  const [message, setMessage] = useState("")
-  const [chatHistory, setChatHistory] = useState<string[]>([])
-  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set())
+const dataSources = [
+  "Manual Entry", "Apple Watch", "Garmin", "Fitbit", "Polar", "Oura Ring", 
+  "WHOOP", "Samsung Health", "Google Fit", "Other Smartwatch"
+]
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      setChatHistory([...chatHistory, message])
-      
-             // Check if the response contains "recovery plan"
-       if (message.toLowerCase().includes("plan")) {
-         console.log("Latest message:", message)
-         console.log("Latest RECOVERY_DATA:", RECOVERY_DATA.getData())
-         console.log("Latest TRAINING_DATA:", TRAINING_DATA.getData())
-         // TODO call api here for recovery
-       }
-      
-      setMessage("")
-    }
-  }
-
-  const toggleQuestionExpansion = (questionId: string) => {
-    const newExpanded = new Set(expandedQuestions)
-    if (newExpanded.has(questionId)) {
-      newExpanded.delete(questionId)
-    } else {
-      newExpanded.add(questionId)
-    }
-    setExpandedQuestions(newExpanded)
-  }
-
-  // Get current recovery data for the selected date
-  const recoveryData = RECOVERY_DATA.getData()
+export function ChatInterface({ selectedDate, simulatedData, autoOpenForm }: ChatInterfaceProps) {
+  const [showForm, setShowForm] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<DailyRecoveryResponse | null>(null)
+  const [customSoreness, setCustomSoreness] = useState("")
+  const [customInjury, setCustomInjury] = useState("")
   
-  // Get the last element from RECOVERY_DATA and log injury and soreness keys
-  const lastRecoveryEntry = recoveryData[recoveryData.length - 1]
+  const [formData, setFormData] = useState<DailyRecoveryData>({
+    date: selectedDate,
+    sleepDuration: 8.0,
+    RHR: 60,
+    HRV: 50,
+    soreness: [],
+    fatigue: 5,
+    source: "Manual Entry",
+    injury: []
+  })
 
-  
-  // Generate questions based on last recovery entry's injury and soreness data
-  const getQuestionsFromLastEntry = (): SuggestedQuestion[] => {
-    const questions: SuggestedQuestion[] = []
-    
-    if (lastRecoveryEntry) {
-      // Add injury-specific questions from last entry
-      if (lastRecoveryEntry.injury && lastRecoveryEntry.injury.length > 0) {
-        const injuryQuestions = mapToInjuryQuestions(lastRecoveryEntry.injury)
-        questions.push(...injuryQuestions)
-      }
-      
-      // Add recovery-specific questions based on last entry's soreness
-      if (lastRecoveryEntry.soreness && lastRecoveryEntry.soreness.length > 0) {
-        lastRecoveryEntry.soreness.forEach((soreness: string) => {
-          if (soreness === RecoverySimulationId.SORE_LEGS || soreness.toLowerCase().includes('legs')) {
-            questions.push(recoverySpecificQuestions[RecoverySimulationId.SORE_LEGS])
-          }
-        })
-      }
-      
-      // Add sleep-related questions if last entry had poor sleep
-      if (lastRecoveryEntry.sleepDuration && lastRecoveryEntry.sleepDuration < 6) {
-        questions.push(recoverySpecificQuestions[RecoverySimulationId.SLEEP_UNDER_6])
-      }
-    }
-    
-    // Remove duplicates
-    return questions.filter((question, index, self) => 
-      index === self.findIndex(q => q.id === question.id)
-    )
-  }
-  const selectedDayData = recoveryData.find(data => data.date === selectedDate)
-  
-  // Helper function to map injury/soreness strings to their corresponding questions
-  const mapToInjuryQuestions = (injuries: string[]): SuggestedQuestion[] => {
-    const detectedInjuries: InjurySimulationId[] = []
-    
-    injuries.forEach(injury => {
-      // Check for exact enum values first, then keywords
-      if (injury === InjurySimulationId.KNEE_HURT || injury.toLowerCase().includes('knee')) {
-        detectedInjuries.push(InjurySimulationId.KNEE_HURT)
-      }
-      if (injury === InjurySimulationId.BREAK_ANKLE || injury.toLowerCase().includes('ankle')) {
-        detectedInjuries.push(InjurySimulationId.BREAK_ANKLE)
-      }
-    })
-    
-    // Remove duplicates and map to questions
-    return [...new Set(detectedInjuries)].map(injury => injurySpecificQuestions[injury])
-  }
-
-  const mapToRecoveryQuestions = (selectedDayData: any): SuggestedQuestion[] => {
-    const detectedFactors: RecoverySimulationId[] = []
-    
-    // Check sleep duration
-    if (selectedDayData.sleepDuration && selectedDayData.sleepDuration < 6) {
-      detectedFactors.push(RecoverySimulationId.SLEEP_UNDER_6)
-    }
-    
-    // Check soreness
-    if (selectedDayData.soreness && selectedDayData.soreness.length > 0) {
-      selectedDayData.soreness.forEach((soreness: string) => {
-        if (soreness === RecoverySimulationId.SORE_LEGS || soreness.toLowerCase().includes('legs')) {
-          detectedFactors.push(RecoverySimulationId.SORE_LEGS)
-        }
+  // Auto-populate form when simulatedData is provided
+  useEffect(() => {
+    if (simulatedData) {
+      setFormData({
+        date: selectedDate,
+        sleepDuration: simulatedData.sleepDuration || 8.0,
+        RHR: simulatedData.RHR || 60,
+        HRV: simulatedData.HRV || 50,
+        soreness: Array.isArray(simulatedData.soreness) ? [...simulatedData.soreness] : [],
+        fatigue: simulatedData.fatigue || 5,
+        source: simulatedData.source || "Manual Entry",
+        injury: Array.isArray(simulatedData.injury) ? [...simulatedData.injury] : []
       })
     }
-    
-    // Remove duplicates and map to questions
-    return [...new Set(detectedFactors)].map(recovery => recoverySpecificQuestions[recovery])
-  }
+  }, [simulatedData, selectedDate])
 
-  // Generate relevant questions based on actual data
-  const relevantQuestions: SuggestedQuestion[] = []
-  
-  // First, add questions from the last recovery entry (most recent data)
-  const lastEntryQuestions = getQuestionsFromLastEntry()
-
-  relevantQuestions.push(...lastEntryQuestions)
-  
-  if (selectedDayData) {
-    // Add injury-specific questions from selected day
-    if (selectedDayData.injury && selectedDayData.injury.length > 0) {
-      const injuryQuestions = mapToInjuryQuestions(selectedDayData.injury)
-      console.log('Injury questions generated from selected day:', injuryQuestions)
-      relevantQuestions.push(...injuryQuestions)
+  // Auto-open form when requested
+  useEffect(() => {
+    if (autoOpenForm && simulatedData) {
+      setShowForm(true)
     }
-    
-    // Add recovery-specific questions from selected day
-    const recoveryQuestions = mapToRecoveryQuestions(selectedDayData)
-    console.log('Recovery questions generated from selected day:', recoveryQuestions)
-    relevantQuestions.push(...recoveryQuestions)
-  }
-  
-  // Remove duplicates after combining all questions
-  const uniqueRelevantQuestions = relevantQuestions.filter((question, index, self) => 
-    index === self.findIndex(q => q.id === question.id)
-  )
+  }, [autoOpenForm, simulatedData])
 
-  // Check if there are detected injuries or factors
-  const hasDetectedInjuries = lastRecoveryEntry?.injury && lastRecoveryEntry.injury.length > 0
-  const hasDetectedFactors = (lastRecoveryEntry?.soreness && lastRecoveryEntry.soreness.length > 0) ||
-                           (lastRecoveryEntry?.sleepDuration && lastRecoveryEntry.sleepDuration < 6) ||
-                           (selectedDayData?.soreness && selectedDayData.soreness.length > 0) ||
-                           (selectedDayData?.sleepDuration && selectedDayData.sleepDuration < 6) ||
-                           (selectedDayData?.injury && selectedDayData.injury.length > 0)
-  
-  const hasDetectedInjuriesOrFactors = hasDetectedInjuries || hasDetectedFactors
-
-  // Add recovery plan question if injuries or factors are detected
-  if (hasDetectedInjuriesOrFactors) {
-    const recoveryPlanQuestion: SuggestedQuestion = {
-      id: "recovery-plan",
-      title: "Do you need a recovery plan?",
-      expandedMessage: "Based on your current injuries or recovery factors, would you like us to suggest a personalized recovery plan to help you get back to optimal performance?"
+  const handleSimulateData = () => {
+    if (simulatedData) {
+      // Use provided simulated data with safety checks
+      setFormData({
+        date: selectedDate,
+        sleepDuration: simulatedData.sleepDuration || 8.0,
+        RHR: simulatedData.RHR || 60,
+        HRV: simulatedData.HRV || 50,
+        soreness: Array.isArray(simulatedData.soreness) ? [...simulatedData.soreness] : [],
+        fatigue: simulatedData.fatigue || 5,
+        source: simulatedData.source || "Manual Entry",
+        injury: Array.isArray(simulatedData.injury) ? [...simulatedData.injury] : []
+      })
+    } else {
+      // Default simulation data
+      setFormData({
+        date: selectedDate,
+        sleepDuration: 7.5,
+        RHR: 65,
+        HRV: 45,
+        soreness: ["Lower back", "Shoulders"],
+        fatigue: 6,
+        source: "Apple Watch",
+        injury: ["Lower back strain"]
+      })
     }
-    uniqueRelevantQuestions.unshift(recoveryPlanQuestion) // Add at the beginning
   }
 
-  // Always add general questions if no specific questions are found
-  if (uniqueRelevantQuestions.length === 0) {
-    console.log('No specific questions found, adding general questions')
-    uniqueRelevantQuestions.push(...generalQuestions)
+  const addCustomSoreness = () => {
+    if (customSoreness.trim() && !formData.soreness.includes(customSoreness.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        soreness: [...prev.soreness, customSoreness.trim()]
+      }))
+      setCustomSoreness("")
+    }
+  }
+
+  const addCustomInjury = () => {
+    if (customInjury.trim() && !formData.injury.includes(customInjury.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        injury: [...prev.injury, customInjury.trim()]
+      }))
+      setCustomInjury("")
+    }
+  }
+
+  const removeSoreness = (soreness: string) => {
+    setFormData(prev => ({
+      ...prev,
+      soreness: prev.soreness.filter(s => s !== soreness)
+    }))
+  }
+
+  const removeInjury = (injury: string) => {
+    setFormData(prev => ({
+      ...prev,
+      injury: prev.injury.filter(i => i !== injury)
+    }))
+  }
+
+  const toggleSoreness = (area: string) => {
+    setFormData(prev => ({
+      ...prev,
+      soreness: prev.soreness.includes(area)
+        ? prev.soreness.filter(s => s !== area)
+        : [...prev.soreness, area]
+    }))
+  }
+
+  const toggleInjury = (injury: string) => {
+    setFormData(prev => ({
+      ...prev,
+      injury: prev.injury.includes(injury)
+        ? prev.injury.filter(i => i !== injury)
+        : [...prev.injury, injury]
+    }))
+  }
+
+  const handleSubmit = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('http://localhost:8000/daily', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const result: DailyRecoveryResponse = await response.json()
+      console.log('Daily Recovery Response:', result)
+      setAnalysisResult(result)
+      setShowForm(false)
+    } catch (error) {
+      console.error('Error submitting daily recovery data:', error)
+      alert('Failed to analyze recovery data. Please check if the backend server is running.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (showForm) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-fitness-orange" />
+            <h2 className="text-xl font-semibold text-foreground">Daily Recovery Check-in</h2>
+            {simulatedData && (
+              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                Scenario Data Loaded
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSimulateData}
+              className="flex items-center gap-1"
+            >
+              <Sparkles className="h-4 w-4" />
+              {simulatedData ? 'Use Scenario Data' : 'Simulate'}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {/* Sleep Duration */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Sleep Duration: {formData.sleepDuration} hours
+            </Label>
+            <Slider
+              value={[formData.sleepDuration]}
+              onValueChange={([value]) => setFormData(prev => ({ ...prev, sleepDuration: value }))}
+              max={12}
+              min={0}
+              step={0.1}
+              className="w-full"
+            />
+          </div>
+
+          {/* Resting Heart Rate */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Heart className="h-4 w-4" />
+              Resting Heart Rate: {formData.RHR} bpm
+            </Label>
+            <Slider
+              value={[formData.RHR]}
+              onValueChange={([value]) => setFormData(prev => ({ ...prev, RHR: value }))}
+              max={120}
+              min={40}
+              step={1}
+              className="w-full"
+            />
+          </div>
+
+          {/* Heart Rate Variability */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Heart Rate Variability: {formData.HRV} ms
+            </Label>
+            <Slider
+              value={[formData.HRV]}
+              onValueChange={([value]) => setFormData(prev => ({ ...prev, HRV: value }))}
+              max={100}
+              min={10}
+              step={1}
+              className="w-full"
+            />
+          </div>
+
+          {/* Fatigue Level */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Fatigue Level: {formData.fatigue}/10
+            </Label>
+            <Slider
+              value={[formData.fatigue]}
+              onValueChange={([value]) => setFormData(prev => ({ ...prev, fatigue: value }))}
+              max={10}
+              min={1}
+              step={1}
+              className="w-full"
+            />
+          </div>
+
+          {/* Data Source */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Data Source</Label>
+            <Select value={formData.source} onValueChange={(value) => setFormData(prev => ({ ...prev, source: value }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {dataSources.map((source) => (
+                  <SelectItem key={source} value={source}>
+                    {source}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Soreness Areas */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Soreness Areas</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {commonSorenessAreas.map((area) => (
+                <div key={area} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`soreness-${area}`}
+                    checked={formData.soreness.includes(area)}
+                    onCheckedChange={() => toggleSoreness(area)}
+                  />
+                  <Label htmlFor={`soreness-${area}`} className="text-sm">
+                    {area}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            
+            {/* Custom soreness */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add custom soreness area"
+                value={customSoreness}
+                onChange={(e) => setCustomSoreness(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addCustomSoreness()}
+              />
+              <Button type="button" size="sm" onClick={addCustomSoreness}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Selected soreness */}
+            {formData.soreness.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.soreness.map((area) => (
+                  <Badge key={area} variant="secondary" className="flex items-center gap-1">
+                    {area}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => removeSoreness(area)}
+                    />
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Injury Areas */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Current Injuries</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {commonInjuries.map((injury) => (
+                <div key={injury} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`injury-${injury}`}
+                    checked={formData.injury.includes(injury)}
+                    onCheckedChange={() => toggleInjury(injury)}
+                  />
+                  <Label htmlFor={`injury-${injury}`} className="text-sm">
+                    {injury}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            
+            {/* Custom injury */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add custom injury"
+                value={customInjury}
+                onChange={(e) => setCustomInjury(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && addCustomInjury()}
+              />
+              <Button type="button" size="sm" onClick={addCustomInjury}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Selected injuries */}
+            {formData.injury.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {formData.injury.map((injury) => (
+                  <Badge key={injury} variant="destructive" className="flex items-center gap-1">
+                    {injury}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => removeInjury(injury)}
+                    />
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <Button 
+            onClick={handleSubmit} 
+            className="w-full" 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Analyzing...' : 'Analyze Recovery'}
+          </Button>
+        </div>
+      </Card>
+    )
   }
 
   return (
@@ -242,74 +443,61 @@ export function ChatInterface({ selectedDate }: ChatInterfaceProps) {
         <h2 className="text-xl font-semibold text-foreground">Daily Check-in</h2>
       </div>
 
-
-      {/* Previous Logs */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-muted-foreground mb-2">Recent Logs</h3>
-        <div className="space-y-2">
-          {mockLogs.map((log, index) => (
-            <div key={index} className="text-sm text-muted-foreground bg-muted/50 p-2 rounded-md">
-              {log}
+      {/* Analysis Result */}
+      {analysisResult && (
+        <ErrorBoundary>
+          <div className="mb-6 space-y-4">
+          <div className="bg-fitness-orange/10 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Recovery Score</h3>
+              <span className="text-3xl font-bold text-fitness-orange">
+                {analysisResult.recovery_score}/10
+              </span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Suggested Questions */}
-      <div className="mb-4">
-        <h3 className="text-sm font-medium text-muted-foreground mb-3">Try Answering These Questions</h3>
-        <div className="space-y-3">
-          {uniqueRelevantQuestions.map((question) => (
-            <Collapsible key={question.id}>
-              <div className="border rounded-lg p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
-                <CollapsibleTrigger 
-                  className="w-full flex items-center justify-between cursor-pointer"
-                  onClick={() => toggleQuestionExpansion(question.id)}
-                >
-                  <span className="font-medium text-sm text-left">{question.title}</span>
-                  {expandedQuestions.has(question.id) ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </CollapsibleTrigger>
-                
-                <CollapsibleContent className="mt-2">
-                  <div className="text-sm text-muted-foreground mb-3">
-                    {question.expandedMessage}
+            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+              <div>Sleep: <strong>{analysisResult.sleep_quality}</strong></div>
+              <div>HRV: <strong>{analysisResult.hrv_status}</strong></div>
+              <div>Fatigue: <strong>{analysisResult.fatigue_level}</strong></div>
+            </div>
+          </div>
+          
+          {/* Recommendations Section */}
+          {analysisResult.recommendations && analysisResult.recommendations.length > 0 && (
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h4 className="font-medium mb-3 text-green-800">Recommendations</h4>
+              <div className="space-y-2">
+                {analysisResult.recommendations.map((rec, index) => (
+                  <div key={index} className="flex items-start gap-3 p-2 bg-green-25 rounded-md">
+                    <div className="flex-shrink-0 w-5 h-5 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+                      {index + 1}
+                    </div>
+                    <span className="text-green-800 text-sm leading-relaxed">{rec}</span>
                   </div>
-                </CollapsibleContent>
+                ))}
               </div>
-            </Collapsible>
-          ))}
-        </div>
-      </div>
-
-      {/* Chat History */}
-      {chatHistory.length > 0 && (
-        <div className="mb-4 space-y-2 max-h-32 overflow-y-auto">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Your Responses</h3>
-          {chatHistory.map((msg, index) => (
-            <div key={index} className="bg-fitness-orange/10 p-2 rounded-md text-sm">
-              {msg}
             </div>
-          ))}
-        </div>
+          )}
+          
+          {/* AI Analysis Section */}
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h4 className="font-medium mb-3">AI Analysis</h4>
+            <div className="text-sm">
+              <MarkdownRenderer
+                content={analysisResult.ai_analysis || 'No analysis available'}
+                colorScheme="blue"
+                className="text-sm"
+              />
+            </div>
+          </div>
+          </div>
+        </ErrorBoundary>
       )}
 
-      {/* Input */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="How are you feeling today?"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          className="flex-1"
-        />
-        <Button onClick={handleSendMessage} size="icon">
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
+      {/* Start Check-in Button */}
+      <Button onClick={() => setShowForm(true)} className="w-full">
+        <Activity className="h-4 w-4 mr-2" />
+        Start Daily Check-in
+      </Button>
     </Card>
   )
 }
