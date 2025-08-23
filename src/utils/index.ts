@@ -227,7 +227,7 @@ let globalConfidenceData: IResearchPaperConfidenceScore[] = [
   },
   {
     date: "2024-12-20",
-    score: 2.1,
+    score: 1.3,
     paperId: "5"
   }
 ];
@@ -260,6 +260,67 @@ export const CONFIDENCE_DATA = {
     globalConfidenceData = [];
   }
 };
+
+// ------------------------------------------------------------
+
+// Import prediction response type
+import { IDailyTrainingPrediction } from '@/types/ai.schema';
+
+// Global prediction data store that can be modified throughout the application
+let globalPredictionData: IDailyTrainingPrediction[] = [];
+
+export const PREDICTION_DATA = {
+  // Get current global prediction data
+  getData: (): IDailyTrainingPrediction[] => {
+    return [...globalPredictionData];
+  },
+  
+  // Set new prediction data
+  setData: (data: IDailyTrainingPrediction[]): void => {
+    globalPredictionData = [...data];
+  },
+  
+  // Add new prediction data entry
+  addData: (data: IDailyTrainingPrediction): void => {
+    globalPredictionData = [...globalPredictionData, data];
+  },
+  
+  // Get prediction data for a specific paper
+  getDataByPaperId: (paperId: string): IDailyTrainingPrediction | undefined => {
+    return globalPredictionData.find(entry => entry.paperId === paperId);
+  },
+  
+  // Reset to empty array
+  reset: (): void => {
+    globalPredictionData = [];
+  }
+};
+
+/**
+ * Convert PREDICTION_DATA to mockPredictedValueData format
+ * @param predictionData - Array of IDailyTrainingPrediction objects
+ * @returns Array of objects in mockPredictedValueData format
+ */
+export function convertPredictionDataToMockFormat(predictionData: IDailyTrainingPrediction[]) {
+  return predictionData.map(prediction => {
+    const { paperId, predictions } = prediction;
+    const currentDate = TODAY.getISOString();
+    
+    // Extract values from predictions object, using defaults if not available
+    const predictedData = {
+      date: currentDate,
+      pace: predictions.pace?.value || 300, // seconds per km
+      distance: predictions.distance?.value || 8, // km
+      duration: predictions.duration?.value || (45 * 60), // seconds
+      cadence: predictions.cadence?.value || 168, // steps per minute
+      lactaseThresholdPace: predictions.lactaseThresholdPace?.value || 270, // seconds per km
+      aerobicDecoupling: predictions.aerobicDecoupling?.value || 9.8, // percent
+      paperId: paperId
+    };
+    
+    return predictedData;
+  });
+}
 
 /**
  * Calculate prediction error and convert to confidence score

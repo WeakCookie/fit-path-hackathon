@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AIModal } from "@/components/ui/ai-modal"
 import { TrainingSimulation } from "@/components/TrainingSimulation"
 import { Calendar, Clock, Route, Zap, Pause, Brain, Target, ChevronDown, ChevronUp } from "lucide-react"
-import { useToday, TRAINING_DATA } from "@/utils"
+import { useToday, TRAINING_DATA, PREDICTION_DATA, TODAY } from "@/utils"
 
 interface TrainingEntry {
   exercise: string
@@ -22,6 +22,8 @@ interface AIItem {
   type: "prediction" | "suggestion"
   title: string
   reasoning: string
+  paperId?: string
+  reference?: string
 }
 
 const mockAIData: Record<string, AIItem[]> = {
@@ -85,6 +87,8 @@ const mockAIData: Record<string, AIItem[]> = {
   ]
 }
 
+
+
 // Utility functions for formatting data
 const formatTime = (seconds: number | undefined) => {
   if (!seconds) return 'N/A'
@@ -115,12 +119,127 @@ export default function TrainingLog() {
   
   const [selectedAI, setSelectedAI] = useState<AIItem | null>(null)
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [currentAIData, setCurrentAIData] = useState<Record<string, AIItem[]>>(mockAIData)
   
   // Get the latest training data from global store (most recent entry)
   const allTrainingData = TRAINING_DATA.getData()
   const latestTrainingData = allTrainingData.length > 0 
     ? [...allTrainingData].sort((a, b) => b.date.localeCompare(a.date))[0] 
     : null
+
+  console.log('Current PREDICTION_DATA in TrainingLog:', PREDICTION_DATA.getData())
+
+  // Transform PREDICTION_DATA into the format expected by the UI
+  const transformPredictionData = (predictionData: any[]): Record<string, AIItem[]> => {
+    const transformed: Record<string, AIItem[]> = {
+      exercise: [],
+      duration: [],
+      distance: [],
+      intensity: [],
+      restTime: []
+    }
+
+    predictionData.forEach((paper) => {
+      const { paperId, predictions } = paper
+      
+      // Process each prediction field
+      Object.entries(predictions).forEach(([field, prediction]: [string, any]) => {
+        if (prediction && transformed[field]) {
+          const fieldName = field.charAt(0).toUpperCase() + field.slice(1)
+          const predictedValue = prediction.value
+          const valueDisplay = typeof predictedValue === 'number' 
+            ? (field === 'duration' ? `${Math.round(predictedValue / 60)} minutes` :
+               field === 'intensity' ? `${predictedValue} RPE` :
+               field === 'restTime' ? `${predictedValue} seconds` :
+               field === 'distance' ? `${predictedValue} km` :
+               `${predictedValue}`)
+            : predictedValue
+          
+          transformed[field].push({
+            id: `pred-${paperId}-${field}`,
+            type: "prediction" as const,
+            title: `${fieldName}: ${valueDisplay}`,
+            reasoning: prediction.reasoning || 'No reasoning provided',
+            paperId: paperId,
+            reference: prediction.reference || undefined
+          })
+        }
+      })
+    })
+
+    return transformed
+  }
+
+  // Update currentAIData when PREDICTION_DATA changes or on mount
+  useEffect(() => {
+    const updateAIData = () => {
+      const predictionData = PREDICTION_DATA.getData()
+      console.log('Updating AI data with prediction data:', predictionData)
+      
+      if (predictionData.length > 0) {
+        const transformedData = transformPredictionData(predictionData)
+        console.log('Transformed prediction data:', transformedData)
+        setCurrentAIData(transformedData)
+      } else {
+        console.log('No prediction data found, using mock data')
+        setCurrentAIData(mockAIData)
+      }
+    }
+
+    // Initial load
+    updateAIData()
+
+    // Subscribe to TODAY changes (which happens after simulations)
+    const unsubscribe = TODAY._subscribe(() => {
+      updateAIData()
+    })
+
+    // Add some test data if no prediction data exists (for demo purposes)
+    if (PREDICTION_DATA.getData().length === 0) {
+      const testPredictionData = [
+        {
+          paperId: "1",
+          predictions: {
+            exercise: { value: "Running", reference: "Smith et al. 2023", reasoning: "Based on your previous endurance training patterns and current fitness level, running is optimal for cardiovascular improvement." },
+            duration: { value: 2700, reference: "Johnson et al. 2022", reasoning: "45 minutes provides optimal training stimulus without excessive fatigue accumulation." },
+            intensity: { value: 7, reference: "Brown et al. 2024", reasoning: "RPE 7 corresponds to your lactate threshold zone for maximum aerobic benefit." }
+          }
+        },
+        {
+          paperId: "2", 
+          predictions: {
+            exercise: { value: "Cycling", reference: "Davis et al. 2023", reasoning: "Cross-training with cycling reduces injury risk while maintaining cardiovascular fitness." },
+            duration: { value: 3600, reference: "Wilson et al. 2023", reasoning: "60 minutes allows for proper warm-up, main set, and cool-down phases." },
+            distance: { value: 8.5, reference: "Taylor et al. 2022", reasoning: "8.5km distance aligns with progressive overload principles for endurance development." }
+          }
+        },
+        {
+          paperId: "3",
+          predictions: {
+            intensity: { value: 6, reference: "Miller et al. 2024", reasoning: "Moderate intensity promotes recovery while maintaining fitness adaptations." },
+            restTime: { value: 120, reference: "Anderson et al. 2023", reasoning: "2-minute rest intervals optimize recovery between training intervals." }
+          }
+        }
+      ]
+      
+      PREDICTION_DATA.setData(testPredictionData)
+
+      // Add a test suggestion for duration field
+      const durationSuggestion = {
+        id: "sug-duration-1",
+        type: "suggestion" as const,
+        title: "Duration Suggestion",
+        reasoning: "I recommend 30 minutes today based on your recent sleep quality and current energy levels. Shorter sessions are more effective when recovery is suboptimal, allowing you to maintain intensity while preventing overreaching."
+      }
+
+      // Update the current AI data to include the suggestion
+      const currentData = transformPredictionData(testPredictionData)
+      currentData.duration.push(durationSuggestion)
+      setCurrentAIData(currentData)
+    }
+
+    return unsubscribe
+  }, [])
 
   const handleInputChange = (field: keyof TrainingEntry, value: string) => {
     setEntry(prev => ({ ...prev, [field]: value }))
@@ -154,7 +273,7 @@ export default function TrainingLog() {
   }
 
   const renderTrainingRow = (field: keyof TrainingEntry, label: string, placeholder: string) => {
-    const aiItems = mockAIData[field] || []
+    const aiItems = currentAIData[field] || []
     const predictions = aiItems.filter(item => item.type === "prediction")
     const suggestions = aiItems.filter(item => item.type === "suggestion")
     const isExpanded = expandedRows.has(field)
@@ -200,31 +319,35 @@ export default function TrainingLog() {
                 onClick={() => toggleRowExpansion(field)}
                 className="flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
               >
-                Predictions
+                {predictions.length} Prediction{predictions.length > 1 ? 's' : ''}
                 <ChevronDown className="h-3 w-3" />
               </Button>
             )}
             
             {hasPredictions && isExpanded && (
-              <div className="flex flex-wrap gap-2 animate-fade-in">
-                {predictions.map((item, index) => (
-                  <Button
-                    key={item.id}
-                    variant="prediction"
-                    size="sm"
-                    onClick={() => handleAIClick(item)}
-                    className="flex items-center gap-1.5 animate-scale-in"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <Brain className="h-3.5 w-3.5" />
-                    Prediction {predictions.length > 1 ? index + 1 : ''}
-                  </Button>
-                ))}
+              <div className="flex items-center gap-2 animate-fade-in">
+                {predictions.map((item, index) => {
+                  // Extract paper ID from the item ID (format: pred-{paperId}-{field})
+                  const paperId = item.id.split('-')[1] || 'Unknown'
+                  return (
+                    <Button
+                      key={item.id}
+                      variant="prediction"
+                      size="sm"
+                      onClick={() => handleAIClick(item)}
+                      className="flex items-center gap-1.5 animate-scale-in whitespace-nowrap"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <Brain className="h-3.5 w-3.5" />
+                      Paper {paperId}
+                    </Button>
+                  )
+                })}
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => toggleRowExpansion(field)}
-                  className="flex items-center gap-1.5 transition-all duration-300"
+                  className="flex items-center gap-1.5 transition-all duration-300 whitespace-nowrap"
                 >
                   Hide
                   <ChevronUp className="h-3 w-3" />
@@ -249,9 +372,15 @@ export default function TrainingLog() {
               <Calendar className="h-6 w-6 text-fitness-orange" />
               <h1 className="text-3xl font-bold">Daily Training Log</h1>
             </div>
-            <p className="text-muted-foreground">
+            <div className="text-muted-foreground">
               Track your workout with AI-powered insights and recommendations
-            </p>
+              {currentAIData !== mockAIData && (
+                <span className="ml-2 inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse block"></span>
+                  Live AI Data Active
+                </span>
+              )}
+            </div>
           </div>
 
           <Card className="shadow-lg border-0">
@@ -361,6 +490,8 @@ export default function TrainingLog() {
         type={selectedAI?.type || "suggestion"}
         title={selectedAI?.title || ""}
         reasoning={selectedAI?.reasoning || ""}
+        paperId={selectedAI?.paperId}
+        reference={selectedAI?.reference}
       />
     </div>
   )
