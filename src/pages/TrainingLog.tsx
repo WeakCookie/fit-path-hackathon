@@ -271,15 +271,15 @@ export default function TrainingLog() {
               <Calendar className="h-6 w-6 text-fitness-orange" />
               <h1 className="text-3xl font-bold">Daily Training Log</h1>
             </div>
-            <p className="text-muted-foreground">
+            <div className="text-muted-foreground">
               Track your workout with AI-powered insights and recommendations
               {currentAIData !== mockAIData && (
                 <span className="ml-2 inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse block"></span>
                   Live AI Data Active
                 </span>
               )}
-            </p>
+            </div>
           </div>
 
           <Card className="shadow-lg border-0">

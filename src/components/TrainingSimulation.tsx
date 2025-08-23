@@ -166,7 +166,6 @@ export function TrainingSimulation() {
         toast({
           title: "Simulation Complete (Fallback)",
           description: `Training simulation completed with fallback data. AI service is currently unavailable. TODAY advanced to ${TODAY.getISOString()}.`,
-          variant: "destructive"
         })
       }
 
