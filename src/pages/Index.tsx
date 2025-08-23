@@ -106,39 +106,80 @@ const Index = () => {
               How FitPath Works
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Simple steps to unlock your fitness potential with AI guidance
+              Evidence-based training powered by research and personalized to you
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="text-center group">
-              <div className="p-4 bg-gradient-to-r from-fitness-orange to-fitness-orange-hover rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Calendar className="h-8 w-8 text-fitness-orange-foreground" />
+          <div className="max-w-4xl mx-auto">
+            {/* Vertical Timeline */}
+            <div className="relative">
+              {/* Timeline Line */}
+              <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-fitness-orange via-prediction-gray to-fitness-orange"></div>
+              
+              {/* Step 1 */}
+              <div className="relative flex items-start mb-12 group">
+                <div className="relative z-10 p-4 bg-gradient-to-r from-fitness-orange to-fitness-orange-hover rounded-full w-16 h-16 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Brain className="h-8 w-8 text-fitness-orange-foreground" />
+                </div>
+                <div className="ml-8 flex-1">
+                  <h3 className="text-xl font-semibold mb-3">Research Collection & Analysis</h3>
+                  <p className="text-muted-foreground">
+                    We analyze scientific papers from trusted sources and your uploaded research to extract actionable training insights and performance claims.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Log Your Workout</h3>
-              <p className="text-muted-foreground">
-                Input your exercise details including duration, intensity, and rest periods
-              </p>
-            </div>
 
-            <div className="text-center group">
-              <div className="p-4 bg-gradient-to-r from-prediction-gray to-prediction-gray-hover rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Brain className="h-8 w-8 text-prediction-gray-foreground" />
+              {/* Step 2 */}
+              <div className="relative flex items-start mb-12 group">
+                <div className="relative z-10 p-4 bg-gradient-to-r from-prediction-gray to-prediction-gray-hover rounded-full w-16 h-16 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Target className="h-8 w-8 text-prediction-gray-foreground" />
+                </div>
+                <div className="ml-8 flex-1">
+                  <h3 className="text-xl font-semibold mb-3">Intelligent Performance Prediction</h3>
+                  <p className="text-muted-foreground">
+                    Our AI predicts your training outcomes using evidence-based claims from our curated research database, tailored to your specific profile.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Get AI Insights</h3>
-              <p className="text-muted-foreground">
-                Receive intelligent predictions and personalized suggestions for optimal training
-              </p>
-            </div>
 
-            <div className="text-center group">
-              <div className="p-4 bg-gradient-to-r from-fitness-orange to-fitness-orange-hover rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <Zap className="h-8 w-8 text-fitness-orange-foreground" />
+              {/* Step 3 */}
+              <div className="relative flex items-start mb-12 group">
+                <div className="relative z-10 p-4 bg-gradient-to-r from-fitness-orange to-fitness-orange-hover rounded-full w-16 h-16 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="h-8 w-8 text-fitness-orange-foreground" />
+                </div>
+                <div className="ml-8 flex-1">
+                  <h3 className="text-xl font-semibold mb-3">Confidence Score Refinement</h3>
+                  <p className="text-muted-foreground">
+                    We continuously update research confidence scores based on prediction accuracy, ensuring only the most reliable studies guide your training.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Optimize Performance</h3>
-              <p className="text-muted-foreground">
-                Apply AI recommendations to improve your training efficiency and results
-              </p>
+
+              {/* Step 4 */}
+              <div className="relative flex items-start mb-12 group">
+                <div className="relative z-10 p-4 bg-gradient-to-r from-prediction-gray to-prediction-gray-hover rounded-full w-16 h-16 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Calendar className="h-8 w-8 text-prediction-gray-foreground" />
+                </div>
+                <div className="ml-8 flex-1">
+                  <h3 className="text-xl font-semibold mb-3">Personalized Training Programs</h3>
+                  <p className="text-muted-foreground">
+                    When confidence scores reach optimal levels, we create comprehensive long-term training programs backed by validated research.
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 5 */}
+              <div className="relative flex items-start group">
+                <div className="relative z-10 p-4 bg-gradient-to-r from-fitness-orange to-fitness-orange-hover rounded-full w-16 h-16 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Zap className="h-8 w-8 text-fitness-orange-foreground" />
+                </div>
+                <div className="ml-8 flex-1">
+                  <h3 className="text-xl font-semibold mb-3">Smart Recovery Optimization</h3>
+                  <p className="text-muted-foreground">
+                    Using data from your devices, we develop intelligent long-term recovery plans that adapt to your training load and personal response patterns.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
