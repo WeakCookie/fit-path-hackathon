@@ -64,9 +64,9 @@ const Index = () => {
                 <div className="p-3 bg-fitness-orange/10 rounded-lg w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Target className="h-6 w-6 text-fitness-orange" />
                 </div>
-                <CardTitle className="text-xl">Smart Suggestions</CardTitle>
+                <CardTitle className="text-xl">Beyond Generic Templates</CardTitle>
                 <CardDescription>
-                  Get AI-powered exercise recommendations tailored to your fitness goals and current performance
+                  Most fitness apps rely on one-size-fits-all templates. We adapt to conflicting research findings to create truly personalized training plans.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -76,9 +76,9 @@ const Index = () => {
                 <div className="p-3 bg-prediction-gray/20 rounded-lg w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
                   <Brain className="h-6 w-6 text-prediction-gray" />
                 </div>
-                <CardTitle className="text-xl">Predictive Analytics</CardTitle>
+                <CardTitle className="text-xl">Research Translation Engine</CardTitle>
                 <CardDescription>
-                  Advanced predictions for your workout intensity, duration, and optimal rest periods
+                  We automatically synthesize dozens of conflicting studies into a single, coherent plan tailored to your specific needs and goals.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -88,9 +88,9 @@ const Index = () => {
                 <div className="p-3 bg-fitness-orange/10 rounded-lg w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
                   <TrendingUp className="h-6 w-6 text-fitness-orange" />
                 </div>
-                <CardTitle className="text-xl">Progress Tracking</CardTitle>
+                <CardTitle className="text-xl">Quality-Weighted Insights</CardTitle>
                 <CardDescription>
-                  Monitor your fitness journey with detailed analytics and performance insights
+                  We evaluate research quality, sample sizes, and real-world applicability to ensure only the most relevant studies guide your training.
                 </CardDescription>
               </CardHeader>
             </Card>
