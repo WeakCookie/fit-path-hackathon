@@ -3,11 +3,13 @@ import {
   DailyTrainingSuggestionResponse,
   TrainingEntry,
   IDailyTrainingLogForAI,
-  EnumTrainingStatus
+  EnumTrainingStatus,
+  IDailyTrainingPrediction
 } from '@/types/ai.schema'
 import { IDailyTrainingLog } from '@/types/daily.schema'
+import mockAIServerResponse from '../../mock_ai_server_response.json'
 
-const AI_SERVER_BASE_URL = 'http://localhost:8000'
+const AI_SERVER_BASE_URL = 'https://93f9ebe060fd.ngrok-free.app'
 
 export class AIService {
   private static instance: AIService
@@ -47,25 +49,10 @@ export class AIService {
    * Map simulation selections to training entry format
    */
   private mapSimulationToTrainingEntry(
-    trainingStatus: string,
     injuries: string[],
     recoveries: string[]
   ): TrainingEntry {
     // Map training status
-    let mappedStatus: EnumTrainingStatus
-    switch (trainingStatus) {
-      case 'performance-up':
-        mappedStatus = EnumTrainingStatus.PERFORMANCE_INCREASED
-        break
-      case 'performance-down':
-        mappedStatus = EnumTrainingStatus.PERFORMANCE_DECREASED
-        break
-      case 'performance-neutral':
-        mappedStatus = EnumTrainingStatus.PERFORMANCE_NEUTRAL
-        break
-      default:
-        mappedStatus = EnumTrainingStatus.PERFORMANCE_NEUTRAL
-    }
 
     // Map injuries to string
     const injuryStatus = injuries.length > 0 ? injuries.join(', ') : undefined
@@ -74,9 +61,62 @@ export class AIService {
     const recoveryStatus = recoveries.length > 0 ? recoveries.join(', ') : undefined
 
     return {
-      training_status: mappedStatus,
-      injury_status: injuryStatus,
+      injury_status: [injuryStatus].filter(Boolean),
       recovery_status: recoveryStatus
+    }
+  }
+
+  /**
+   * Map DailyTrainingSuggestionResponse to IDailyTrainingPrediction
+   */
+  public mapToTrainingPrediction(response: DailyTrainingSuggestionResponse): IDailyTrainingPrediction {
+    const predictions: IDailyTrainingPrediction['predictions'] = {}
+
+    // Process suggestions (claims) to build the prediction object
+    response.daily_suggestions.claims.forEach(claim => {
+      const value = claim.modified_value
+      const reference = claim.reference
+      const reasoning = claim.reasoning
+
+      switch (claim.type) {
+        case 'exercise':
+          predictions.exercise = { 
+            value: String(value), 
+            reference, 
+            reasoning 
+          }
+          break
+        case 'intensity':
+          predictions.intensity = { 
+            value: Number(value), 
+            reference, 
+            reasoning 
+          }
+          break
+        case 'duration':
+          predictions.duration = { 
+            value: Number(value), 
+            reference, 
+            reasoning 
+          }
+          break
+        case 'rest_time':
+          predictions.restTime = { 
+            value: Number(value), 
+            reference, 
+            reasoning 
+          }
+          break
+      }
+    })
+
+    // Process predictions to add any additional prediction text
+    // Note: The predictions array contains prediction text, but claims contain the actual values
+    // The claims are the actionable suggestions, so we use those for the values
+    
+    return {
+      paperId: String(response.paper_id),
+      predictions
     }
   }
 
@@ -84,18 +124,21 @@ export class AIService {
    * Get daily training suggestions from AI server
    */
   async getDailyTrainingSuggestion(
-    trainingStatus: string,
     injuries: string[],
     recoveries: string[],
-    latestTraining?: IDailyTrainingLog,
-    userId: string = 'user-001'
-  ): Promise<DailyTrainingSuggestionResponse> {
+    latestTraining: IDailyTrainingLog,
+    userId: string = 'user-001',
+    paperId: string
+  ): Promise<IDailyTrainingPrediction> {
+    // return this.mapToTrainingPrediction(mockAIServerResponse as DailyTrainingSuggestionResponse) as IDailyTrainingPrediction
+
     try {
-      const currentForm = this.mapSimulationToTrainingEntry(trainingStatus, injuries, recoveries)
+      const currentForm = this.mapSimulationToTrainingEntry(injuries, recoveries)
       
       const requestBody: DailyTrainingSuggestionRequest = {
         user_id: userId,
         currentForm,
+        paper_id: paperId,
         latestTraining: latestTraining ? this.convertToAIFormat(latestTraining) : undefined
       }
 
@@ -114,8 +157,7 @@ export class AIService {
       }
 
       const data: DailyTrainingSuggestionResponse = await response.json()
-      return data
-      
+      return this.mapToTrainingPrediction(data)      
     } catch (error) {
       console.error('Error fetching AI suggestions:', error)
       

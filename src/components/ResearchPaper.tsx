@@ -7,12 +7,13 @@ import { IResearchClaim } from "@/types/research.schema"
 import { CONFIDENCE_DATA } from "@/utils"
 import { capitalize } from "lodash"
 
-const ELIGIBLE_FOR_LONG_TERM_PLANNING_SCORE = 5
-const ELIGIBLE_FOR_SUGGESTIONS_SCORE = 3
+const ELIGIBLE_FOR_LONG_TERM_PLANNING_SCORE = 2
+const ELIGIBLE_FOR_SUGGESTIONS_SCORE = 2
 
 // Helper function to get confidence badges based on score
 const getConfidenceBadges = (paperId: string) => {
   const latestScore = CONFIDENCE_DATA.getLatestScore(paperId)
+  console.log("🚀🚀🚀🚀 ~ getConfidenceBadges ~ CONFIDENCE_DATA:", CONFIDENCE_DATA.getLatestScore(paperId))
   if (!latestScore) return []
 
   const badges = []

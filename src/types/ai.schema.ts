@@ -5,8 +5,7 @@ export enum EnumTrainingStatus {
 }
 
 export interface TrainingEntry {
-  training_status: EnumTrainingStatus
-  injury_status?: string
+  injury_status?: string[]
   recovery_status?: string
 }
 
@@ -35,6 +34,7 @@ export interface DailyTrainingSuggestionRequest {
   user_id: string
   currentForm: TrainingEntry // What user is typing
   latestTraining?: IDailyTrainingLogForAI // Most recent completed session
+  paper_id: string
 }
 
 export interface AIClaim {
@@ -63,4 +63,21 @@ export interface DailyTrainingSuggestionResponse {
   paper_id: number
   daily_suggestions: DailySuggestions
   daily_predictions: DailyPredictions
+}
+
+export interface IDailyTrainingPrediction {
+  paperId: string
+  predictions: {
+    exercise?: { value: string, reference: string, reasoning: string }
+    intensity?: { value: number, reference: string, reasoning: string }
+    duration?: { value: number, reference: string, reasoning: string }
+    distance?: { value: number, reference: string, reasoning: string }
+    restTime?: { value: number, reference: string, reasoning: string }
+    lactaseThresholdPace?: { value: number, reference: string, reasoning: string }
+    aerobicDecoupling?: { value: number, reference: string, reasoning: string }
+    oneMinHRR?: { value: number, reference: string, reasoning: string }
+    efficiencyFactor?: { value: number, reference: string, reasoning: string }
+    pace?: { value: number, reference: string, reasoning: string }
+    cadence?: { value: number, reference: string, reasoning: string }
+  }
 }

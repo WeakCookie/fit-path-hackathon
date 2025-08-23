@@ -1,53 +1,53 @@
 {
-    "paper_id": 0,
+    "paper_id": 1,
     "daily_suggestions": {
-        "date": "2025-08-24",
-        "claims": [
-            {
-                "type": "exercise",
-                "modified_value": "Light Cycling (Active Recovery)",
-                "reasoning": "Given the continued leg soreness and recent high-intensity long run, active recovery through non-impact exercise will reduce strain on the injured ankle while supporting blood flow and healing. Evidence-based reference specific to exercise modality is not provided, but modification is warranted due to injury and soreness.",
-                "reference": ""
-            },
-            {
-                "type": "intensity",
-                "modified_value": "8",
-                "reasoning": "To promote recovery and reduce the risk of overuse or re-injury in the context of muscle soreness and previous ankle injury, a low-intensity session is appropriate. No explicit RPE adjustment evidence from research, but a reduction aligns with general injury management strategies.",
-                "reference": ""
-            },
-            {
-                "type": "duration",
-                "modified_value": 1800,
-                "reasoning": "With no sleep deprivation reported, the standard session duration can be modulated for a lighter recovery workout. Selection of 1800 seconds (30 minutes) supports recovery without excessive load, though this is not directly specified in the referenced research.",
-                "reference": ""
-            },
-            {
-                "type": "rest_time",
-                "modified_value": 120,
-                "reasoning": "\"When sleep duration is less than 5 hours, extending rest periods to 2 minutes between sets allows full recovery of maximum strength for subsequent sets\". While user sleep is not specified as <5h, recommending extended rest aligns with optimal recovery support for muscle soreness and elevated injury risk.",
-                "reference": "When sleep duration is less than 5 hours, extending rest periods to 2 minutes between sets allows full recovery of maximum strength for subsequent sets"
-            }
-        ]
+      "date": "2025-08-24",
+      "claims": [
+        {
+          "type": "exercise",
+          "modified_value": "Easy Recovery Run",
+          "reasoning": "After a high-intensity long run with notable aerobic decoupling, an easy recovery run is advisable to promote recovery and prevent excessive aerobic system stress.",
+          "reference": "When sleep duration is less than 5 hours, participants can only perform at 70% of their normal training weight"
+        },
+        {
+          "type": "intensity",
+          "modified_value": "RPE 5",
+          "reasoning": "Reducing intensity to RPE 5 allows for active recovery and addresses fatigue markers such as elevated aerobic decoupling, supporting performance stability and injury prevention.",
+          "reference": "When sleep duration is less than 5 hours, participants can only perform at 70% of their normal training weight"
+        },
+        {
+          "type": "duration",
+          "modified_value": 1800,
+          "reasoning": "Shortening duration (e.g., 30 minutes) after an intense effort supports optimal recovery and avoids cumulative fatigue, in line with evidence that capacity is reduced after poor sleep or high fatigue markers.",
+          "reference": "Sleep duration under 5 hours reduces training capacity to 70% of normal performance levels"
+        },
+        {
+          "type": "rest_time",
+          "modified_value": 120,
+          "reasoning": "If the session includes intervals or sets, extend rest to 2 minutes to ensure full recovery between efforts as supported by research when there are recovery challenges.",
+          "reference": "When sleep duration is less than 5 hours, extending rest periods to 2 minutes between sets allows full recovery of maximum strength for subsequent sets"
+        }
+      ]
     },
     "daily_predictions": {
-        "date": "2025-08-24",
-        "predictions": [
-            {
-                "type": "exercise",
-                "prediction": "Based on your recent high-intensity long run and the fact that your legs are still sore (especially on top of your ankle history), tomorrow should focus on 'Active Recovery' or a 'Cross Training' session—think gentle cycling, swimming, or a brisk walk. This lets you promote blood flow and healing without risking more impact on your recovering legs and ankle."
-            },
-            {
-                "type": "intensity",
-                "prediction": "I recommend keeping the intensity very light, around an RPE of 3 out of 10. This ensures you're giving your body a chance to recover while still staying mobile and supporting your ongoing progress."
-            },
-            {
-                "type": "duration",
-                "prediction": "An optimal duration for your recovery session tomorrow would be about 30 to 40 minutes (1800-2400 seconds). This is just enough to stimulate recovery without adding stress—remember, quality of movement is more important than duration right now."
-            },
-            {
-                "type": "rest_time",
-                "prediction": "Since the focus is on continuous, low-impact movement, you won't need strict rest periods tomorrow. However, if you opt for circuit-style bodyweight mobility exercises, consider resting 60 seconds between movements if you start to feel fatigued or any ankle discomfort. Otherwise, take breaks as needed and prioritize how your body feels."
-            }
-        ]
+      "date": "2025-08-24",
+      "predictions": [
+        {
+          "type": "exercise",
+          "prediction": "Based on your training patterns showing consistent recovery-focused days following high-intensity long runs, I predict you will likely do an Easy Recovery Run tomorrow. You tend to favor active recovery over complete rest when there are no signs of injury and performance is up."
+        },
+        {
+          "type": "intensity",
+          "prediction": "Given that you typically reduce intensity after a hard session, tomorrow you will probably opt for a lower intensity, likely around RPE 5, to facilitate recovery while still maintaining your training rhythm."
+        },
+        {
+          "type": "duration",
+          "prediction": "Looking at your recent history, after intense long runs, you usually train about 30–40 minutes the next day. I forecast your session will last approximately 1800 to 2100 seconds (30–35 minutes)."
+        },
+        {
+          "type": "rest_time",
+          "prediction": "Because you rarely do interval-based sessions after long runs, rest intervals are generally minimal or incidental between easy running blocks. You will likely take short, active rest periods if you incorporate any, perhaps 60–90 seconds scattered between stretches or drills."
+        }
+      ]
     }
-}
+  }
