@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Brain, Calendar, Target } from "lucide-react"
 import researchData from "@/mock/research.mock.json"
+import { AI_SERVER_BASE_URL } from "@/services/ai.service"
 
 interface LongtermProgramResponse {
   performanceImprovementExpected: string
@@ -97,7 +98,7 @@ export default function Program() {
 
   // Transform research data to match API schema
   const transformToCurrentProgramClaims = () => {
-    const allClaims = researchData.map(paper => paper.programClaim as ProgramClaims)
+    const allClaims = researchData.filter(paper => paper.id === '3').map(paper => paper.programClaim as ProgramClaims)
     
     // Combine all claims into the expected format
     const combinedClaims = {
@@ -155,15 +156,8 @@ export default function Program() {
         current_program_claims: currentProgramClaims,
         recovery_data: transformedRecoveryData
       }
-
-      console.log("Sending request to AI server:", requestPayload)
-      console.log("Current program claims:", currentProgramClaims)
-      console.log("Transformed recovery data:", transformedRecoveryData)
-
-      // Make actual API call to the longterm-program-design endpoint
-      console.log("About to make fetch request to: http://localhost:8000/longterm-program-design")
       
-      const response = await fetch('http://localhost:8000/longterm-program-design', {
+      const response = await fetch(`${AI_SERVER_BASE_URL}/longterm-program-design`, {
         method: 'POST',
         mode: 'cors',
         headers: {
@@ -172,10 +166,6 @@ export default function Program() {
         },
         body: JSON.stringify(requestPayload)
       })
-
-      console.log("Fetch response received:", response)
-      console.log("Response status:", response.status)
-      console.log("Response headers:", response.headers)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
